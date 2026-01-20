@@ -13,11 +13,12 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         :root {
-            --sidebar-width-expanded: 220px;
-            --sidebar-width-collapsed: 100px;
+            --sidebar-width-expanded: 280px;
+            --sidebar-width-collapsed: 280px;
             --content-padding-expanded: 0;
             --content-padding-collapsed: 0;
             --scrollbar-width: 0px;
+            --sidebar-gap: 8px;
         }
     /* Hilangkan reservasi ruang di sisi kiri yang menimbulkan strip putih */
     html { scrollbar-gutter: stable; }
@@ -40,9 +41,16 @@
     /* Perbesar max-height agar item terakhir (Cetak) tidak terpotong; tampilkan overflow saat open */
     .menu-item-with-submenu.open .submenu { max-height: 600px; opacity: 1; overflow: visible; }
         .menu-item-with-submenu.open .submenu-chevron { transform: rotate(180deg); }
+
+        /* Sidebar readability: prevent label wrapping (use ellipsis) */
+        .sidebar nav .menu-text { min-width: 0; max-width: 100%; }
+        .sidebar nav .menu-text span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Submenu visual nesting */
+        .menu-item-with-submenu .submenu { border-left: 1px solid rgba(226, 232, 240, 1); margin-left: 0.25rem; padding-left: 0.75rem; }
         
     /* Enhanced menu item styles (no horizontal shift on hover) */
-    .sidebar nav a:hover, .sidebar nav div:hover { transform: none !important; box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1); }
+    .sidebar nav a:hover, .sidebar nav div:hover { transform: none !important; box-shadow: none !important; }
         
         /* Badge animations */
         .sidebar nav .bg-blue-400\/30,
@@ -52,8 +60,8 @@
         .sidebar nav a:hover .bg-green-400\/30,
         .sidebar nav a:hover .bg-orange-400\/30 { transform: scale(1.1); box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2); }
         
-    /* Updated to match siswa (student) purple sidebar gradient */
-    .gradient-bg { background: linear-gradient(140deg, #4338CA 0%, #6D28D9 45%, #A21CAF 100%); box-shadow: 0 8px 32px rgba(109, 40, 217, 0.35); }
+    /* Light sidebar theme (match screenshot style) */
+    .gradient-bg { background: #ffffff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
         
         /* Fixed Layout Styles */
         .main-container {
@@ -67,12 +75,13 @@
         }
         
         .sidebar {
-            width: var(--sidebar-width-collapsed);
+            width: var(--sidebar-width-expanded);
             flex-shrink: 0;
-            background: linear-gradient(140deg, #4338CA 0%, #6D28D9 45%, #A21CAF 100%);
+            background: #ffffff;
             position: fixed; top: 0; left: 0; height: 100vh; z-index: 99999999999999; /* elevated overlay */
             overflow-y: auto; display: flex; flex-direction: column;
-            box-shadow: 8px 0 32px rgba(109, 40, 217, 0.30); backdrop-filter: blur(15px);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            border-right: 1px solid rgba(226, 232, 240, 0.95);
             transition: width .15s ease; /* minimal smoothness */
         }
         /* Hover expanded appearance overlays content without pushing */
@@ -87,14 +96,12 @@
     /* Hide chevron + active indicator when collapsed */
     .sidebar.collapsed .submenu-chevron { display: none !important; }
     .sidebar.collapsed .w-1.bg-white.rounded-full { display: none !important; }
-        .sidebar .p-6 { background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(10px); }
+        .sidebar .p-6 { background: #ffffff; }
     .sidebar.collapsed nav ul li a { justify-content: center; padding: 0.6rem; min-height: 48px; display: flex; align-items: center; gap:0 !important; }
     .sidebar.collapsed nav ul li a svg { margin: 0; opacity: 1; }
     /* Uniform icon container size expanded & collapsed */
     .sidebar nav a .flex-shrink-0 { width:46px; height:46px; }
-    /* Saat sidebar expanded overlay, bisa tambahkan kelas helper (JS optional) untuk menonaktifkan interaksi konten di bawahnya */
-    .sidebar.expanded ~ .content-wrapper { pointer-events: none; }
-    .sidebar.expanded ~ .content-wrapper .fixed-header { pointer-events: none; }
+    /* Sidebar always expanded on desktop; never block content interaction */
     .sidebar.collapsed nav a .flex-shrink-0 { width:46px; height:46px; }
     /* Prevent lateral shift when collapsed */
     .sidebar.collapsed nav a:hover, .sidebar.collapsed nav div:hover { transform:none !important; }
@@ -110,6 +117,87 @@
     /* Square logo box */
     .logo-box { width:56px; height:56px; border-radius:14px; }
     @media (max-width:1023px){ .logo-box { width:54px; height:54px; } }
+    @media (min-width:1024px){ #sidebarCollapse { display:none !important; } }
+
+        /* ===== Light theme overrides for existing sidebar markup ===== */
+        .sidebar .sidebar-text h1 { color: #0f172a !important; }
+        .sidebar .sidebar-text p { color: #475569 !important; }
+        .sidebar .sidebar-text .text-white\/60,
+        .sidebar .sidebar-text .text-white\/80 { color: #94a3b8 !important; }
+
+        /* Logo area polish */
+        .sidebar .logo-box { background: #ede9fe !important; border-color: rgba(226,232,240,1) !important; box-shadow: none !important; }
+        .sidebar .logo-box i { color: #6d28d9 !important; }
+
+        /* Brand typography (prettier wrap + badge) */
+        .sidebar .sidebar-text h1 { font-size: 1.05rem !important; line-height: 1.15 !important; letter-spacing: -0.01em !important; }
+        .sidebar .sidebar-text p { margin-top: 0.15rem !important; font-size: 0.82rem !important; line-height: 1.2 !important; }
+        .sidebar .school-name { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: baseline; }
+        .sidebar .school-code {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.1rem 0.5rem; border-radius: 9999px;
+            background: #ede9fe; color: #6d28d9;
+            font-weight: 700; font-size: 0.78rem;
+            border: 1px solid rgba(167, 139, 250, 0.35);
+            white-space: nowrap;
+        }
+
+        .sidebar .menu-label { color: #94a3b8 !important; }
+        .sidebar .w-8.h-px.bg-white\/20 { background: rgba(148, 163, 184, 0.35) !important; }
+
+        /* Base items */
+        .sidebar nav a,
+        .sidebar nav .submenu-toggle {
+            color: #334155 !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
+        .sidebar nav a:hover,
+        .sidebar nav .submenu-toggle:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        /* Active states (existing markup uses bg-white/20 and bg-white/15) */
+        .sidebar nav a.bg-white\/20,
+        .sidebar nav div.bg-white\/20,
+        .sidebar nav a.bg-white\/15 {
+            background: #ede9fe !important;
+            color: #6d28d9 !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
+
+        /* Icons: remove boxed backgrounds */
+        .sidebar nav a .bg-white\/20,
+        .sidebar nav div .bg-white\/20,
+        .sidebar nav .submenu a .bg-white\/15,
+        .sidebar nav .submenu a .w-6.h-6 {
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
+
+        /* Submenu items */
+        .sidebar nav .submenu a { color: #64748b !important; }
+        .sidebar nav .submenu a:hover { background: #f1f5f9 !important; color: #0f172a !important; }
+        .sidebar nav .submenu a.bg-white\/15 { background: #ede9fe !important; color: #6d28d9 !important; }
+
+        .sidebar .submenu-chevron { color: #64748b !important; }
+
+        /* Replace old white borders used in markup */
+        .sidebar .border-white\/30,
+        .sidebar .border-white\/20,
+        .sidebar .border-white\/10 { border-color: rgba(226, 232, 240, 1) !important; }
+
+        /* Active indicator (vertical bar) */
+        .sidebar .w-1.h-8.bg-white.rounded-full { background: #6d28d9 !important; }
+
+        /* Logout keeps red semantics */
+        .sidebar nav a.text-red-200 { color: #dc2626 !important; }
+        .sidebar nav a.text-red-200:hover { background: #fee2e2 !important; color: #b91c1c !important; }
+        .sidebar nav a.text-red-200 .bg-red-500\/20,
+        .sidebar nav a.text-red-200 .bg-red-500\/30 { background: transparent !important; }
         
         .content-wrapper {
             flex: 1; display: flex; flex-direction: column; overflow-x: hidden;
@@ -132,7 +220,7 @@
         .content-area {
             flex: 1;
             overflow: visible;
-            padding: 1.1rem 1.6rem 2rem; 
+            padding: 1.1rem 0 2rem; 
             margin-top: 60px;
             min-height: calc(100vh - 60px);
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -141,6 +229,33 @@
             margin-left: 0 !important;
             width: 100%; box-sizing: border-box;
             position: relative; z-index: 1; /* bawah sidebar */
+        }
+
+        /* Content container: fill width and stay aligned to sidebar */
+        .page-shell { width: 100%; max-width: none; margin: 0; padding: 0; }
+        /* Many pages wrap content in top-level `px-*` blocks; remove that gutter so content sits close to sidebar */
+        .page-shell > .px-3,
+        .page-shell > .px-4,
+        .page-shell > .px-6,
+        .page-shell > .px-8,
+        .page-shell > .px-10 {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        @media (min-width: 1024px) {
+            .page-shell { max-width: none; margin: 0; padding-right: 0; }
+            /* Many views use Tailwind `mx-auto` to center; left-align them inside the shell */
+            .page-shell .mx-auto { margin-left: 0 !important; margin-right: auto !important; }
+            /* Remove common Tailwind width clamps so content can fill the available space */
+            .page-shell .container,
+            .page-shell .max-w-7xl,
+            .page-shell .max-w-6xl,
+            .page-shell .max-w-5xl,
+            .page-shell .max-w-4xl,
+            .page-shell .max-w-3xl {
+                max-width: none !important;
+                width: 100% !important;
+            }
         }
         /* Remove unintended extra top margin from first direct child */
         .content-area > *:first-child { margin-top: 0 !important; }
@@ -157,12 +272,12 @@
         .sidebar nav::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
         
         @media (max-width: 1023px) {
-            .sidebar { position: fixed !important; top: 0 !important; left: 0 !important; width: 320px !important; height: 100vh !important; z-index: 1000 !important; transform: translateX(-100%); background: linear-gradient(140deg, #4338CA 0%, #6D28D9 45%, #A21CAF 100%) !important; backdrop-filter: blur(10px); box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15); overflow-y: auto; }
+            .sidebar { position: fixed !important; top: 0 !important; left: 0 !important; width: 320px !important; height: 100vh !important; z-index: 1000 !important; transform: translateX(-100%); background: #ffffff !important; backdrop-filter: none !important; box-shadow: 4px 0 20px rgba(15, 23, 42, 0.12); overflow-y: auto; }
             .sidebar.open { transform: translateX(0); }
             .sidebar .p-4 { padding: 1.5rem !important; }
             .sidebar nav { padding: 1rem !important; }
-            .sidebar .menu-text { font-size: 1.4rem !important; font-weight: 500 !important; }
-            .sidebar .menu-label { font-size: 1.25rem !important; margin-bottom: 1rem !important; }
+            .sidebar .menu-text { font-size: 1.05rem !important; font-weight: 500 !important; }
+            .sidebar .menu-label { font-size: 0.85rem !important; margin-bottom: 1rem !important; }
             .content-area { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 1rem !important; box-sizing: border-box; overflow-x: hidden; }
             .fixed-header { left: 0 !important; width: 100% !important; height: 60px !important; background: rgba(255, 255, 255, 0.95) !important; backdrop-filter: blur(15px) !important; }
             .content-wrapper { margin-left: 0 !important; padding-left: 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
@@ -183,8 +298,10 @@
         }
         
         @media (min-width: 1024px) {
-            .content-area { margin-left: 0; padding: 0.5rem; max-width: none; overflow: visible !important; height: auto !important; }
+            .content-area { margin-left: 0; padding: 0.5rem 0; max-width: none; overflow: visible !important; height: auto !important; }
             /* Header offset & width sudah diatur global; tidak berubah saat hover */
+            .content-wrapper { margin-left: calc(var(--sidebar-width-expanded) + var(--sidebar-gap)) !important; }
+            .fixed-header { left: calc(var(--sidebar-width-expanded) + var(--sidebar-gap)) !important; width: calc(100% - (var(--sidebar-width-expanded) + var(--sidebar-gap))) !important; }
         }
         @media (max-width: 1023px) {
             .sidebar { transform: translateX(-100%); z-index: 50; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important; }
@@ -211,7 +328,7 @@
 </head>
 <body class="main-container bg-gray-50">
     <!-- Sidebar -->
-    <aside class="sidebar gradient-bg shadow-xl flex flex-col relative collapsed" id="mainSidebar">
+    <aside class="sidebar gradient-bg shadow-xl flex flex-col relative" id="mainSidebar">
         <!-- Logo Section -->
     <div class="p-6 border-b border-white/20 relative bg-gradient-to-r from-white/5 to-transparent">
             <div class="flex items-center justify-between">
@@ -221,7 +338,10 @@
                         <i class="fas fa-graduation-cap text-white text-xl"></i>
                     </div>
                     <div class="sidebar-text">
-                        <h1 class="text-white text-xl font-bold tracking-tight">SDN Grogol Utara 09</h1>
+                        <h1 class="text-white text-xl font-bold tracking-tight school-name">
+                            <span>SDN Grogol Utara</span>
+                            <span class="school-code">09</span>
+                        </h1>
                         <p class="text-white/80 text-sm font-medium">Aplikasi Pengelolaan Sekolah</p>
                         <div class="flex items-center mt-1">
                             <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
@@ -668,7 +788,9 @@
 
         <!-- Content Area -->
         <main class="content-area">
-            <?= $this->renderSection('content') ?>
+            <div class="page-shell">
+                <?= $this->renderSection('content') ?>
+            </div>
         </main>
     </div>
 
@@ -683,33 +805,15 @@
             // Overlay strategy: kita hanya mengubah width sidebar, tidak mengutak-atik konten / header
 
             function updateToggleIcon() {
-                if (!sidebarCollapseBtn) return;
-                const icon = sidebarCollapseBtn.querySelector('i');
-                if (!icon) return;
-                if (sidebar.classList.contains('collapsed')) {
-                    icon.classList.remove('fa-angles-left');
-                    icon.classList.add('fa-angles-right');
-                    document.body.classList.add('sidebar-collapsed');
-                } else {
-                    icon.classList.remove('fa-angles-right');
-                    icon.classList.add('fa-angles-left');
-                    document.body.classList.remove('sidebar-collapsed');
+                // Sidebar is always expanded on desktop in the new theme
+                if (sidebarCollapseBtn) sidebarCollapseBtn.classList.add('hidden');
+                if (sidebar) {
+                    // Defensive: if any old state/class is present, reset it
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.remove('expanded');
                 }
+                document.body.classList.remove('sidebar-collapsed');
             }
-
-            // Desktop manual toggle (optional pin)
-            if (sidebarCollapseBtn) {
-                sidebarCollapseBtn.addEventListener('click', function() {
-                    const isCollapsed = sidebar.classList.toggle('collapsed');
-                    if(!isCollapsed){ sidebar.classList.add('expanded'); }
-                    else { sidebar.classList.remove('expanded'); }
-                    updateToggleIcon();
-                });
-            }
-
-            // Hover expand/collapse: hanya width sidebar berubah
-            sidebar.addEventListener('mouseenter', () => { if(window.innerWidth>=1024){ sidebar.classList.add('expanded'); sidebar.classList.remove('collapsed'); } });
-            sidebar.addEventListener('mouseleave', () => { if(window.innerWidth>=1024){ sidebar.classList.remove('expanded'); sidebar.classList.add('collapsed'); updateToggleIcon(); } });
 
             // Mobile menu toggle
             if (mobileMenuToggle) {
@@ -795,9 +899,15 @@
                 if (window.innerWidth > 1023) sidebar.classList.remove('open');
             });
 
-            // Ensure correct alignment on initial load (desktop)
-            // On load we keep content static; no need to adjust wrapper
-            if (window.innerWidth > 1023) { updateToggleIcon(); }
+            // Ensure correct alignment on initial load
+            updateToggleIcon();
+
+            // Desktop safety net: keep sidebar expanded and visible
+            if (window.innerWidth >= 1024 && sidebar) {
+                sidebar.classList.remove('collapsed');
+                sidebar.classList.remove('expanded');
+                document.body.classList.remove('sidebar-collapsed');
+            }
 
             // Add smooth scrolling for sidebar when menu item is clicked
             const menuLinks = document.querySelectorAll('.sidebar nav a');

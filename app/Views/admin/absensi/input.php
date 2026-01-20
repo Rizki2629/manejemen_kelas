@@ -2,6 +2,18 @@
 
 <?= $this->section('content') ?>
 
+<?php
+$isOffDay = $isOffDay ?? false;
+$offDayInfo = $offDayInfo ?? null;
+$offDayStatus = is_array($offDayInfo) ? ($offDayInfo['status'] ?? null) : null;
+$offDayKet = is_array($offDayInfo) ? ($offDayInfo['keterangan'] ?? '') : '';
+?>
+
+<script>
+    window.ABSENSI_IS_OFF_DAY = <?= $isOffDay ? 'true' : 'false' ?>;
+    window.ABSENSI_OFF_DAY_INFO = <?= json_encode($offDayInfo, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+</script>
+
 <!-- Simple and Clean Attendance Input -->
 <div class="container-fluid py-4" style="padding-top: 1rem;">
     <div class="row">
@@ -18,7 +30,7 @@
                                     <h4 class="text-lg font-bold truncate">Input Absensi</h4>
                                 </div>
                             </div>
-                            <button type="button" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 ml-2 flex-shrink-0" id="markAllPresentMobile">
+                            <button type="button" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 ml-2 flex-shrink-0 <?= $isOffDay ? 'opacity-60 cursor-not-allowed' : '' ?>" id="markAllPresentMobile" <?= $isOffDay ? 'disabled' : '' ?>>
                                 <i class="fas fa-check-circle mr-2"></i>
                                 <span>Hadir Semua</span>
                             </button>
@@ -72,7 +84,7 @@
                             </small>
                         </div>
                         <div class="flex space-x-3">
-                            <button type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5" id="markAllPresent">
+                            <button type="button" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 <?= $isOffDay ? 'opacity-60 cursor-not-allowed' : '' ?>" id="markAllPresent" <?= $isOffDay ? 'disabled' : '' ?>>
                                 <i class="fas fa-check-circle mr-2"></i>
                                 <span>Hadir Semua</span>
                             </button>
@@ -80,6 +92,23 @@
                     </div>
                 </div>
             </div>
+
+            <?php if ($isOffDay): ?>
+            <div class="mb-6">
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 shadow-sm">
+                    <div class="flex items-start">
+                        <i class="fas fa-ban mt-0.5 mr-3"></i>
+                        <div class="flex-1">
+                            <div class="font-bold">Input absensi dinonaktifkan</div>
+                            <div class="text-sm">Tanggal ini termasuk hari libur/off<?= $offDayKet ? ': ' . esc($offDayKet) : '' ?>.</div>
+                        </div>
+                        <?php if ($offDayStatus): ?>
+                            <span class="ml-3 px-3 py-1 rounded-full text-xs font-semibold bg-amber-200 text-amber-900"><?= esc($offDayStatus) ?></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- Filter Card -->
             <div class="bg-white rounded-xl shadow-lg mb-6 border-0 overflow-hidden">
@@ -222,8 +251,9 @@
                                     <div class="grid grid-cols-4 gap-1 mb-4 attendance-buttons" role="group">
                                         <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
                                                id="hadir_<?= $student['siswa_id'] ?>" value="hadir"
+                                             <?= $isOffDay ? 'disabled' : '' ?>
                                                <?= isset($student['status']) && $student['status'] === 'hadir' ? 'checked' : '' ?>>
-                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-green-300 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-green-400 text-xs font-semibold attendance-btn" for="hadir_<?= $student['siswa_id'] ?>" 
+                                         <label class="flex flex-col items-center py-2 px-1 border-2 border-green-300 text-green-600 hover:bg-green-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-green-400 text-xs font-semibold attendance-btn<?= $isOffDay ? ' opacity-50 cursor-not-allowed pointer-events-none' : '' ?>" for="hadir_<?= $student['siswa_id'] ?>" 
                                                title="Tandai Hadir">
                                             <i class="fas fa-check mb-1"></i> 
                                             <span class="hidden sm:block">Hadir</span>
@@ -231,8 +261,9 @@
 
                                         <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
                                                id="sakit_<?= $student['siswa_id'] ?>" value="sakit"
+                                                 <?= $isOffDay ? 'disabled' : '' ?>
                                                <?= isset($student['status']) && $student['status'] === 'sakit' ? 'checked' : '' ?>>
-                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-yellow-300 text-yellow-600 hover:bg-yellow-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-yellow-400 text-xs font-semibold attendance-btn" for="sakit_<?= $student['siswa_id'] ?>"
+                                             <label class="flex flex-col items-center py-2 px-1 border-2 border-yellow-300 text-yellow-600 hover:bg-yellow-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-yellow-400 text-xs font-semibold attendance-btn<?= $isOffDay ? ' opacity-50 cursor-not-allowed pointer-events-none' : '' ?>" for="sakit_<?= $student['siswa_id'] ?>"
                                                title="Tandai Sakit">
                                             <i class="fas fa-thermometer-half mb-1"></i> 
                                             <span class="hidden sm:block">Sakit</span>
@@ -240,8 +271,9 @@
 
                                         <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
                                                id="izin_<?= $student['siswa_id'] ?>" value="izin"
+                                                 <?= $isOffDay ? 'disabled' : '' ?>
                                                <?= isset($student['status']) && $student['status'] === 'izin' ? 'checked' : '' ?>>
-                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-blue-300 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-blue-400 text-xs font-semibold attendance-btn" for="izin_<?= $student['siswa_id'] ?>"
+                                             <label class="flex flex-col items-center py-2 px-1 border-2 border-blue-300 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-blue-400 text-xs font-semibold attendance-btn<?= $isOffDay ? ' opacity-50 cursor-not-allowed pointer-events-none' : '' ?>" for="izin_<?= $student['siswa_id'] ?>"
                                                title="Tandai Izin">
                                             <i class="fas fa-hand-paper mb-1"></i> 
                                             <span class="hidden sm:block">Izin</span>
@@ -249,8 +281,9 @@
 
                                         <input type="radio" class="sr-only" name="status_<?= $student['siswa_id'] ?>" 
                                                id="alpha_<?= $student['siswa_id'] ?>" value="alpha"
+                                                 <?= $isOffDay ? 'disabled' : '' ?>
                                                <?= isset($student['status']) && $student['status'] === 'alpha' ? 'checked' : '' ?>>
-                                        <label class="flex flex-col items-center py-2 px-1 border-2 border-red-300 text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-red-400 text-xs font-semibold attendance-btn" for="alpha_<?= $student['siswa_id'] ?>"
+                                             <label class="flex flex-col items-center py-2 px-1 border-2 border-red-300 text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-all duration-200 hover:border-red-400 text-xs font-semibold attendance-btn<?= $isOffDay ? ' opacity-50 cursor-not-allowed pointer-events-none' : '' ?>" for="alpha_<?= $student['siswa_id'] ?>"
                                                title="Tandai Alpha">
                                             <i class="fas fa-times mb-1"></i> 
                                             <span class="hidden sm:block">Alpha</span>
@@ -264,6 +297,7 @@
                                         </label>
                                         <textarea class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 student-keterangan" 
                                                   rows="2" placeholder="Keterangan opsional..." 
+                                                  <?= $isOffDay ? 'disabled' : '' ?>
                                                   data-siswa-id="<?= $student['siswa_id'] ?>"><?= $student['keterangan'] ?? '' ?></textarea>
                                     </div>
                                 </div>
@@ -299,8 +333,8 @@
             <!-- Floating Save Button - SINGLE INSTANCE ONLY -->
             <?php if ($selectedKelas && !empty($students)): ?>
             <button type="button" 
-                    class="floating-save-btn" 
-                    id="saveAll">
+                    class="floating-save-btn <?= $isOffDay ? 'opacity-60 cursor-not-allowed' : '' ?>" 
+                    id="saveAll" <?= $isOffDay ? 'disabled' : '' ?>>
                 <!-- Icon -->
                 <i class="fas fa-paper-plane"></i>
                 
@@ -374,6 +408,12 @@
     /* Animation */
     transition: all 0.3s ease !important;
     animation: float 3s ease-in-out infinite;
+}
+
+.floating-save-btn:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
 }
 
 .floating-save-btn:hover {
@@ -1790,6 +1830,12 @@ function updateSearchResults(searchTerm, statusFilter, visibleCount, totalCount)
 function markAllPresent() {
     console.log('🚀 === MARK ALL PRESENT FUNCTION CALLED ===');
     console.log('Function starting execution...');
+
+    if (window.ABSENSI_IS_OFF_DAY) {
+        const ket = window.ABSENSI_OFF_DAY_INFO && window.ABSENSI_OFF_DAY_INFO.keterangan ? window.ABSENSI_OFF_DAY_INFO.keterangan : 'Hari libur/off';
+        showNotification('Tidak bisa input absensi pada hari libur/off: ' + ket, 'warning');
+        return;
+    }
     
     // Prevent multiple executions
     if (window.markAllPresentRunning) {
@@ -1969,6 +2015,12 @@ function saveAllAttendance() {
     console.log('saveAllAttendance() called');
     console.log('Current attendanceData object:', attendanceData);
     console.log('Number of records in attendanceData:', Object.keys(attendanceData).length);
+
+    if (window.ABSENSI_IS_OFF_DAY) {
+        const ket = window.ABSENSI_OFF_DAY_INFO && window.ABSENSI_OFF_DAY_INFO.keterangan ? window.ABSENSI_OFF_DAY_INFO.keterangan : 'Hari libur/off';
+        showNotification('Tidak bisa input absensi pada hari libur/off: ' + ket, 'warning');
+        return;
+    }
     
     if (Object.keys(attendanceData).length === 0) {
         showNotification('Belum ada data absensi yang diisi!', 'warning');

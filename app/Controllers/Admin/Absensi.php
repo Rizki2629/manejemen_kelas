@@ -68,6 +68,10 @@ class Absensi extends BaseController
             // Only use current date if no date parameter provided (first load)
             $selectedDate = date('Y-m-d');
         }
+
+        // Determine if selected date is holiday/off (incl. weekend)
+        $offDayInfo = $this->absensiModel->getHolidayDetails($selectedDate);
+        $isOffDay = $offDayInfo !== null;
         
         $selectedKelas = $this->request->getPost('kelas') ?? $this->request->getGet('kelas') ?? $userKelas;
 
@@ -115,7 +119,9 @@ class Absensi extends BaseController
             'allKelas' => $allKelas,
             'selectedDate' => $selectedDate,
             'selectedKelas' => $selectedKelas,
-            'students' => $students
+            'students' => $students,
+            'isOffDay' => $isOffDay,
+            'offDayInfo' => $offDayInfo,
         ];
 
         // If AJAX request, return JSON data instead of full view
@@ -147,6 +153,18 @@ class Absensi extends BaseController
         $status = $this->request->getPost('status');
         $keterangan = $this->request->getPost('keterangan');
         $kelas = $this->request->getPost('kelas');
+
+        // Block input on holiday/off day (incl. weekend)
+        $offDayInfo = $tanggal ? $this->absensiModel->getHolidayDetails($tanggal) : null;
+        if ($offDayInfo !== null) {
+            $ket = $offDayInfo['keterangan'] ?? 'Hari libur/off';
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Tidak bisa input absensi pada hari libur/off: ' . $ket,
+                'offDay' => true,
+                'offDayInfo' => $offDayInfo,
+            ]);
+        }
 
         // Validate access
         if (!$this->absensiModel->canAccessClass($userId, $kelas, $userRole)) {
@@ -411,6 +429,19 @@ class Absensi extends BaseController
             return $this->response->setJSON([
                 'success' => false, 
                 'message' => 'Tanggal dan kelas harus diisi'
+            ]);
+        }
+
+        // Block input on holiday/off day (incl. weekend)
+        $offDayInfo = $this->absensiModel->getHolidayDetails($tanggal);
+        if ($offDayInfo !== null) {
+            $ket = $offDayInfo['keterangan'] ?? 'Hari libur/off';
+            log_message('debug', 'Save All - Blocked due to off day: ' . $tanggal . ' - ' . json_encode($offDayInfo));
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Tidak bisa input absensi pada hari libur/off: ' . $ket,
+                'offDay' => true,
+                'offDayInfo' => $offDayInfo,
             ]);
         }
         

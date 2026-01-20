@@ -9,7 +9,8 @@
     body { background-color: #f8fafc; }
     .sidebar { min-height: 100vh; border-right: 1px solid #e2e8f0; background: #ffffff; }
     .sidebar .nav-link { border-radius: .5rem; }
-    .sidebar .nav-link.active, .sidebar .nav-link:hover { background: #f1f5f9; }
+    .sidebar .nav-link:hover { background: #f1f5f9; }
+    .sidebar .nav-link.active { background: #ede9fe; color: #6d28d9; }
     .card-habit svg { width: 28px; height: 28px; }
   .card-habit .card-body { display: flex; flex-direction: column; }
     .card-habit { min-height: 200px; }

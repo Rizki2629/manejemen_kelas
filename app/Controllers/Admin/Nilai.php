@@ -25,6 +25,24 @@ class Nilai extends BaseController
         $this->walikelasModel = new WalikelasModel();
     }
 
+    private function syncNilaiIdSequenceIfPostgres($db): void
+    {
+        try {
+            $driver = '';
+            try { $driver = (string) ($db->DBDriver ?? ''); } catch (\Throwable $e) { $driver = ''; }
+            try { $driver = $driver ?: (string) ($db->getPlatform() ?? ''); } catch (\Throwable $e) { /* ignore */ }
+            if (stripos($driver, 'Postgre') === false && stripos($driver, 'pgsql') === false) {
+                return;
+            }
+
+            // If the sequence is behind (common after migrations), inserts can hit duplicate PK.
+            // Set sequence to MAX(id) so nextval returns MAX(id)+1.
+            $db->query("SELECT setval(pg_get_serial_sequence('nilai','id'), COALESCE((SELECT MAX(id) FROM nilai), 0))");
+        } catch (\Throwable $e) {
+            // Best-effort only.
+        }
+    }
+
     /**
      * Index - List nilai by mata pelajaran
      */
@@ -886,6 +904,7 @@ class Nilai extends BaseController
         }
 
         $db = \Config\Database::connect();
+        $this->syncNilaiIdSequenceIfPostgres($db);
         $hasKodeCol = false; try { $hasKodeCol = $db->fieldExists('kode_penilaian','nilai'); } catch(\Throwable $e){}
         // Duplicate kode_penilaian guard: if client sends a kode already existing for this kelas+mapel, reject to prevent accidental overwrite
         if($hasKodeCol && $kode){
@@ -901,7 +920,8 @@ class Nilai extends BaseController
             }
         }
 
-        $db->transStart();
+        try {
+            $db->transStart();
         $inserted = 0;
         if (!$kode && $hasKodeCol) {
             // generate once if column exists
@@ -930,7 +950,12 @@ class Nilai extends BaseController
             $this->nilaiModel->insert($data);
             $inserted++;
         }
-        $db->transComplete();
+            $db->transComplete();
+        } catch (\Throwable $e) {
+            try { $db->transRollback(); } catch (\Throwable $e2) {}
+            log_message('error', 'storeBulkHarian error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menyimpan nilai harian']);
+        }
 
         if ($db->transStatus() === false) {
             return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menyimpan nilai']);
@@ -999,10 +1024,12 @@ class Nilai extends BaseController
         }
 
         $db = \Config\Database::connect();
+        $this->syncNilaiIdSequenceIfPostgres($db);
         $hasKodeCol = false; try { $hasKodeCol = $db->fieldExists('kode_penilaian','nilai'); } catch(\Throwable $e){}
-        $db->transStart();
         $updated = 0;
-        foreach ($grades as $g) {
+        try {
+            $db->transStart();
+            foreach ($grades as $g) {
             if (!isset($g['siswa_id'])) continue;
             $sid = (int)$g['siswa_id'];
             $val = $g['nilai'];
@@ -1026,6 +1053,7 @@ class Nilai extends BaseController
         if ($row) {
                 $updateData = [
                     'nilai' => $val,
+                    'tanggal' => $tanggal,
                     'tp_materi' => $deskripsi,
                     'updated_by' => $userId,
                 ];
@@ -1048,8 +1076,13 @@ class Nilai extends BaseController
                 $this->nilaiModel->insert($insertData);
                 $updated++;
             }
+            }
+            $db->transComplete();
+        } catch (\Throwable $e) {
+            try { $db->transRollback(); } catch (\Throwable $e2) {}
+            log_message('error', 'updateBulkHarian error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menyimpan perubahan']);
         }
-        $db->transComplete();
 
         if ($db->transStatus() === false) {
             return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Gagal menyimpan perubahan']);

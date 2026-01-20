@@ -475,7 +475,7 @@ async function saveEditedGrades() {
     if (!colIndex) { showFlash('Pilih Penilaian Harian dulu','error'); return; }
     if (!tanggal) { showFlash('Tanggal wajib diisi','error'); return; }
     const kelas = '<?= esc($selectedKelas ?? '') ?>';
-    const mapel = '<?= isset($_GET['mapel']) ? esc($_GET['mapel']) : '' ?>';
+    const mapel = '<?= esc($selectedMapel ?? '') ?>';
     // Ambil kode_penilaian dari header matrix agar insert siswa baru tetap pada kode yang sama
     let kodePenilaian = null;{
         try { const matrix = <?= json_encode($harianMatrix ?? []) ?>; if(matrix.headers && matrix.headers[colIndex-1]) { kodePenilaian = matrix.headers[colIndex-1].label; } } catch(e){}
@@ -572,13 +572,25 @@ async function saveAllGrades() {
     
     const kelas = '<?= esc($selectedKelas ?? '') ?>';
     const mapel = '<?= esc($selectedMapel ?? '') ?>';
-    const okStore = await confirmDialog(`Simpan ${grades.length} nilai harian untuk Kelas ${kelas} - ${mapel}?`, {icon:'question', confirmText:'Simpan'});
+    const kode = (document.getElementById('kode_penilaian')?.value || '').trim();
+    const kodeNum = (() => {
+        const m = kode.match(/^(?:PH|PTS|PAS)-(\d+)$/i);
+        return m ? parseInt(m[1], 10) : null;
+    })();
+    const usedNums = Array.isArray(window.USED_KODE_NUMBERS) ? window.USED_KODE_NUMBERS : [];
+    const isUsedKode = (kodeNum !== null) ? usedNums.includes(kodeNum) : false;
+    const confirmText = isUsedKode ? 'Simpan (Update)' : 'Simpan';
+    const msg = isUsedKode
+        ? `Kode ${kode} sudah terpakai. Ini akan MENGUBAH penilaian yang sudah ada. Lanjutkan?`
+        : `Simpan ${grades.length} nilai harian untuk Kelas ${kelas} - ${mapel}?`;
+    const okStore = await confirmDialog(msg, {icon: isUsedKode ? 'warning' : 'question', confirmText});
     if(!okStore) return;
 
     try {
         const csrfName = '<?= csrf_token() ?>';
         const csrfHash = '<?= csrf_hash() ?>';
-        const resp = await fetch('<?= base_url('admin/nilai/store-bulk-harian') ?>', {
+        const endpoint = isUsedKode ? '<?= base_url('admin/nilai/update-bulk-harian') ?>' : '<?= base_url('admin/nilai/store-bulk-harian') ?>';
+        const resp = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -591,15 +603,16 @@ async function saveAllGrades() {
                 mapel,
                 tanggal,
                 deskripsi,
-                kode_penilaian: document.getElementById('kode_penilaian')?.value || '',
+                kode_penilaian: kode,
                 grades
             })
         });
         const data = await resp.json();
         if (resp.ok && data.status === 'ok') {
             closeStudentModal();
-            const extraInfo = (data.inserted?` (${data.inserted} baris, Kode ${data.kode_penilaian||'-'})`: '');
-            showFlash((data.message || 'Nilai berhasil disimpan') + extraInfo,'success');
+            const extraInfo = (data.inserted?` (${data.inserted} baris, Kode ${data.kode_penilaian||'-'})`: (data.updated?` (${data.updated} baris)`: ''));
+            const baseMsg = isUsedKode ? 'Perubahan tersimpan' : (data.message || 'Nilai berhasil disimpan');
+            showFlash(baseMsg + extraInfo,'success');
             setTimeout(()=>{ window.location.href = buildPrettyNilaiUrl(kelas,mapel); },800);
         } else {
             showFlash(data.message || 'Gagal menyimpan nilai','error');
@@ -679,18 +692,29 @@ async function fetchNextKode(){
         const usedResp = await fetch(`<?= base_url('admin/nilai/used-kode-harian') ?>?kelas=${encodeURIComponent(kelas)}&mapel=${encodeURIComponent(mapel)}&jenis=${prefix==='PH'?'harian':prefix.toLowerCase()}&prefix=${prefix}`);
         const usedData = await usedResp.json();
         const used = (usedData.status==='ok') ? usedData.used : [];
-        // Build number options 1..15
+        window.USED_KODE_NUMBERS = Array.isArray(used) ? used : [];
+        const usedMax = (Array.isArray(used) && used.length) ? Math.max(...used) : 0;
+        const upper = Math.max(15, usedMax + 5);
+        // Build number options 1..upper (allow selecting used numbers for edit/update)
         numberSel.innerHTML='';
-        for(let i=1;i<=15;i++){
+        for(let i=1;i<=upper;i++){
             const opt=document.createElement('option');
             opt.value=i; opt.textContent=i;
-            if(used.includes(i)){ opt.disabled=true; opt.textContent = i + ' (terpakai)'; }
+            if(used.includes(i)){ opt.textContent = i + ' (terpakai)'; }
             numberSel.appendChild(opt);
         }
         // Auto select first available not used
         let selected = null;
-        for(const o of numberSel.options){ if(!o.disabled){ selected=o.value; break; } }
-        if(selected){ numberSel.value=selected; }
+        for(const o of numberSel.options){
+            const n = parseInt(o.value,10);
+            if(!used.includes(n)) { selected=o.value; break; }
+        }
+        if(selected){
+            numberSel.value=selected;
+        } else {
+            // if everything up to upper is used (unlikely), default to next number
+            numberSel.value = String(usedMax + 1);
+        }
         updateKodeCombined();
     } catch(e){ if(kodeInput) kodeInput.value=prefix+'-?'; }
 }
