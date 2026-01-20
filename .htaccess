@@ -1,0 +1,10 @@
+# Disable directory browsing in project root. Rewrite rules have been moved
+# to the `public/` folder so only requests under the web root are rewritten.
+Options -Indexes
+
+# NOTE: Rewrite rules for CodeIgniter have been relocated to
+# public/.htaccess. Keep this root .htaccess minimal to avoid
+# accidental rewrite loops when Apache applies parent .htaccess files.
+
+# Disable server signature
+ServerSignature Off

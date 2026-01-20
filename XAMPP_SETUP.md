@@ -1,0 +1,1 @@
+cloudflared access tcp --hostname mysql.sdngu09.my.id --url localhost:3306

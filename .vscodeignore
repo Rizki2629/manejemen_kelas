@@ -1,0 +1,70 @@
+# VS Code Ignore - untuk mengecualikan file dari pencarian dan indexing
+
+# Dependency folders
+node_modules/
+vendor/
+bower_components/
+
+# Build dan cache
+builds/
+build/
+dist/
+*.cache
+
+# CodeIgniter specific
+writable/cache/
+writable/logs/
+writable/session/
+writable/uploads/
+writable/debugbar/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Version control
+.git/
+.svn/
+.hg/
+CVS/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+
+# Test files yang tidak perlu di-index
+test_*.php
+*_test.php
+debug_*.php
+check_*.php
+add_sample_*.php
+seed_*.php
+restore_*.php
+update_*.php
+verify_*.php
+analyze_*.php
+prepare_*.php
+
+# Documentation yang tidak perlu indexing realtime
+*.md
+DOCUMENTATION/
+docs/
