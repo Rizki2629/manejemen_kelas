@@ -305,10 +305,10 @@
             color: #6d28d9 !important;
         }
 
-        /* Brand typography (prettier wrap + badge) */
+        /* Brand typography (single-line title + badge) */
         .sidebar .sidebar-text h1 {
-            font-size: 1.05rem !important;
-            line-height: 1.15 !important;
+            font-size: 1rem !important;
+            line-height: 1.1 !important;
             letter-spacing: -0.01em !important;
         }
 
@@ -320,23 +320,40 @@
 
         .sidebar .school-name {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
+            flex-wrap: nowrap;
+            gap: 0.35rem;
             align-items: baseline;
+            white-space: nowrap;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar .sidebar-text {
+            min-width: 0;
+        }
+
+        /* Keep the school name on one line; truncate only the name if needed */
+        .sidebar .school-name>span:first-child {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1 1 auto;
         }
 
         .sidebar .school-code {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.1rem 0.5rem;
+            padding: 0.08rem 0.45rem;
             border-radius: 9999px;
             background: #ede9fe;
             color: #6d28d9;
             font-weight: 700;
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             border: 1px solid rgba(167, 139, 250, 0.35);
             white-space: nowrap;
+            flex: 0 0 auto;
         }
 
         .sidebar .menu-label {
