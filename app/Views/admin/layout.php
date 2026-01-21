@@ -15,11 +15,11 @@
     <style>
         :root {
             --sidebar-width-expanded: 280px;
-            --sidebar-width-collapsed: 280px;
+            --sidebar-width-collapsed: 88px;
             --content-padding-expanded: 0;
             --content-padding-collapsed: 0;
             --scrollbar-width: 0px;
-            --sidebar-gap: 3px;
+            --sidebar-gap: 0px;
         }
 
         /* Hilangkan reservasi ruang di sisi kiri yang menimbulkan strip putih */
@@ -51,7 +51,6 @@
         .sidebar,
         .sidebar nav a,
         .sidebar nav div,
-        .content-wrapper,
         .fixed-header,
         .sidebar nav .submenu,
         .sidebar nav .submenu-chevron,
@@ -128,12 +127,12 @@
 
         /* Fixed Layout Styles */
         .main-container {
-            display: block;
+            display: flex;
             min-height: 100vh;
+            height: 100vh;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             position: relative;
-            overflow-x: hidden;
-            overflow-y: visible;
+            overflow: hidden;
             margin: 0 !important;
             padding: 0 !important;
             border: 0 !important;
@@ -143,19 +142,21 @@
             width: var(--sidebar-width-expanded);
             flex-shrink: 0;
             background: #ffffff;
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
             height: 100vh;
             z-index: 99999999999999;
             /* elevated overlay */
             overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
             border-right: 1px solid rgba(226, 232, 240, 0.95);
-            transition: width .15s ease;
+            margin-right: 2px;
+            transition: width .15s ease !important;
             /* minimal smoothness */
+            box-sizing: border-box;
         }
 
         /* Hover expanded appearance overlays content without pushing */
@@ -165,6 +166,13 @@
 
         .sidebar.collapsed {
             width: var(--sidebar-width-collapsed);
+        }
+
+        /* Desktop hover-expand when collapsed (overlay; content stays put) */
+        @media (min-width: 1024px) {
+            .sidebar.collapsed:hover {
+                width: var(--sidebar-width-expanded);
+            }
         }
 
         /* When collapsed remove large shadow to eliminate perceived gap line; add subtle separator */
@@ -274,11 +282,7 @@
             }
         }
 
-        @media (min-width:1024px) {
-            #sidebarCollapse {
-                display: none !important;
-            }
-        }
+        /* Sidebar toggle button removed */
 
         /* ===== Light theme overrides for existing sidebar markup ===== */
         .sidebar .sidebar-text h1 {
@@ -444,32 +448,11 @@
             background: transparent !important;
         }
 
-        .content-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            margin-left: 0 !important;
-            padding-left: 0 !important;
-            /* sidebar benar-benar overlay, tidak sisakan ruang */
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            height: 100vh;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Hapus kelas pinned-expanded (tidak dipakai lagi) */
-        .content-wrapper.pinned-expanded {
-            margin-left: 0 !important;
-            padding-left: 0 !important;
-        }
+        /* content wrapper removed: header + content are direct children */
 
         .fixed-header {
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
             z-index: 50;
             width: 100%;
             height: 60px;
@@ -484,12 +467,10 @@
         .content-area {
             flex: 1;
             overflow: visible;
-            /* Offset for fixed header: use padding (not margin) to avoid a large empty band */
-            padding: calc(60px + 1.1rem) var(--sidebar-gap) 2rem;
+            padding: 1.1rem var(--sidebar-gap) 2rem;
             margin-top: 0;
-            min-height: 100vh;
+            min-height: 0;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            height: auto;
             scrollbar-width: thin;
             scrollbar-color: #cbd5e1 transparent;
             margin-left: 0 !important;
@@ -610,9 +591,11 @@
         .sidebar nav {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 0;
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+            box-sizing: border-box;
         }
 
         .sidebar nav::-webkit-scrollbar {
@@ -633,6 +616,10 @@
         }
 
         @media (max-width: 1023px) {
+            .main-container {
+                padding-left: 0 !important;
+            }
+
             .sidebar {
                 position: fixed !important;
                 top: 0 !important;
@@ -673,25 +660,16 @@
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
-                padding: calc(60px + 1rem) 1rem 1rem !important;
+                padding: 1rem 1rem 1rem !important;
                 box-sizing: border-box;
                 overflow-x: hidden;
             }
 
             .fixed-header {
-                left: 0 !important;
                 width: 100% !important;
                 height: 60px !important;
                 background: rgba(255, 255, 255, 0.95) !important;
                 backdrop-filter: blur(15px) !important;
-            }
-
-            .content-wrapper {
-                margin-left: 0 !important;
-                padding-left: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box;
             }
 
             .content-area .container,
@@ -710,7 +688,7 @@
                 width: 100% !important;
                 max-width: 100% !important;
                 margin: 0 !important;
-                padding: calc(60px + 0.75rem) 0.75rem 0.75rem !important;
+                padding: 0.75rem 0.75rem 0.75rem !important;
                 box-sizing: border-box;
                 overflow-x: hidden;
             }
@@ -739,13 +717,6 @@
                 font-size: 1.1rem !important;
             }
 
-            .content-wrapper {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                box-sizing: border-box;
-            }
 
             .content-area>* {
                 width: 100% !important;
@@ -769,23 +740,12 @@
         @media (min-width: 1024px) {
             .content-area {
                 margin-left: 0;
-                padding: calc(60px + 0.5rem) var(--sidebar-gap) 0.5rem;
+                padding: 0.5rem var(--sidebar-gap) 0.5rem;
                 max-width: none;
                 overflow: visible !important;
-                height: auto !important;
-            }
-
-            /* Header offset & width sudah diatur global; tidak berubah saat hover */
-            .content-wrapper {
-                margin-left: calc(var(--sidebar-width-expanded) + var(--sidebar-gap)) !important;
-                width: calc(100vw - (var(--sidebar-width-expanded) + var(--sidebar-gap))) !important;
-                max-width: calc(100vw - (var(--sidebar-width-expanded) + var(--sidebar-gap))) !important;
-                box-sizing: border-box;
             }
 
             .fixed-header {
-                left: calc(var(--sidebar-width-expanded) + var(--sidebar-gap)) !important;
-                width: calc(100vw - (var(--sidebar-width-expanded) + var(--sidebar-gap))) !important;
                 box-sizing: border-box;
             }
         }
@@ -801,13 +761,7 @@
                 transform: translateX(0);
             }
 
-            .content-wrapper {
-                margin-left: 0 !important;
-                transition: none !important;
-            }
-
             .fixed-header {
-                left: 0 !important;
                 width: 100% !important;
                 transition: none !important;
             }
@@ -845,6 +799,50 @@
             border-color: #4f46e5 !important;
             /* indigo-600 */
         }
+
+        /* RESET LAYOUT: simplify to stable sidebar + content */
+        .main-container {
+            display: flex !important;
+            align-items: stretch !important;
+            padding-left: 0 !important;
+            height: 100vh;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            margin-left: 0 !important;
+            height: 100vh;
+        }
+
+        body.sidebar-collapsed .content-wrapper {
+            margin-left: 0 !important;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow: auto;
+            padding: 1.5rem 1.5rem 2rem !important;
+        }
+
+        .page-shell {
+            max-width: none;
+            margin: 0;
+            padding: 0 1.5rem 0 0 !important;
+        }
+
+        @media (max-width: 1023px) {
+            .content-wrapper {
+                margin-left: 0 !important;
+            }
+
+            .page-shell {
+                max-width: 100%;
+                padding: 0 1rem !important;
+            }
+        }
     </style>
 </head>
 
@@ -871,11 +869,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Sidebar Toggle Button -->
-                <!-- Improved toggle button with dynamic double-arrow icon -->
-                <button id="sidebarCollapse" class="sidebar-toggle-btn hidden" title="Sidebar hover expand only">
-                    <i class="fas fa-angles-left text-white text-base"></i>
-                </button>
             </div>
         </div>
 
@@ -1323,20 +1316,7 @@
             const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.documentElement.style.setProperty('--scrollbar-width', scrollBarWidth + 'px');
             const sidebar = document.getElementById('mainSidebar');
-            const sidebarCollapseBtn = document.getElementById('sidebarCollapse');
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            // Overlay strategy: kita hanya mengubah width sidebar, tidak mengutak-atik konten / header
-
-            function updateToggleIcon() {
-                // Sidebar is always expanded on desktop in the new theme
-                if (sidebarCollapseBtn) sidebarCollapseBtn.classList.add('hidden');
-                if (sidebar) {
-                    // Defensive: if any old state/class is present, reset it
-                    sidebar.classList.remove('collapsed');
-                    sidebar.classList.remove('expanded');
-                }
-                document.body.classList.remove('sidebar-collapsed');
-            }
 
             // Mobile menu toggle
             if (mobileMenuToggle) {
@@ -1421,16 +1401,6 @@
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 1023) sidebar.classList.remove('open');
             });
-
-            // Ensure correct alignment on initial load
-            updateToggleIcon();
-
-            // Desktop safety net: keep sidebar expanded and visible
-            if (window.innerWidth >= 1024 && sidebar) {
-                sidebar.classList.remove('collapsed');
-                sidebar.classList.remove('expanded');
-                document.body.classList.remove('sidebar-collapsed');
-            }
 
             // Add smooth scrolling for sidebar when menu item is clicked
             const menuLinks = document.querySelectorAll('.sidebar nav a');
