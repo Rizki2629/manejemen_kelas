@@ -1,0 +1,33 @@
+name: Deploy to Office Server
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    # Bagian ini kuncinya. Kita suruh job ini jalan di komputer kantor Anda
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          # Penting: matikan clean jika Anda tidak ingin menghapus file config lokal/env
+          clean: false
+
+      - name: Pull latest changes
+        run: |
+          # Asumsikan runner dijalankan di folder proyek atau Anda navigasi ke sana
+          # Sesuaikan path jika perlu
+          git pull origin main
+
+      - name: Install Dependencies & Restart
+        run: |
+          # Contoh jika pakai Node.js
+          npm install
+          # Jika pakai PM2 untuk process manager
+          pm2 restart nama-aplikasi
+
+          # Contoh jika pakai Docker
+          # docker-compose up -d --build
