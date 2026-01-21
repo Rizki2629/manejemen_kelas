@@ -953,7 +953,7 @@ input[value="alpha"]:checked + .attendance-btn {
         padding: 16px !important;
     }
     
-    .bg-gradient-to-r .block.md\\:hidden .flex.items-center.justify-between.mb-3 {
+    .bg-gradient-to-r .block.md\:hidden .flex.items-center.justify-between.mb-3 {
         margin-bottom: 12px !important;
         align-items: flex-start !important;
         gap: 8px !important;
@@ -979,7 +979,7 @@ input[value="alpha"]:checked + .attendance-btn {
         max-width: 100% !important;
     }
     
-    .bg-gradient-to-r small.text-white\\/90 {
+    .bg-gradient-to-r small.text-white\/90 {
         font-size: 12px !important;
         line-height: 16px !important;
         margin: 0 !important;
@@ -1264,7 +1264,7 @@ input[value="alpha"]:checked + .attendance-btn {
         padding: 10px !important;
     }
     
-    .bg-gradient-to-r .block.md\\:hidden .flex.items-center.justify-between.mb-3 {
+    .bg-gradient-to-r .block.md\:hidden .flex.items-center.justify-between.mb-3 {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 8px !important;
