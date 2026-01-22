@@ -457,7 +457,7 @@
 
         .content-area {
             flex: 1;
-            overflow: visible;
+            overflow: auto;
             padding: 1.1rem var(--sidebar-gap) 2rem;
             margin-top: 0;
             min-height: 0;
@@ -733,7 +733,8 @@
                 margin-left: 0;
                 padding: 0.5rem var(--sidebar-gap) 0.5rem;
                 max-width: none;
-                overflow: visible !important;
+                overflow: auto !important;
+                overflow-x: hidden !important;
             }
 
             .fixed-header {

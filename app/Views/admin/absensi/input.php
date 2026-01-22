@@ -1418,11 +1418,15 @@ input[value="alpha"]:checked + .attendance-btn {
 #studentsGrid { margin-bottom: 0; padding-bottom: 0; }
 .absensi-page-last { margin-bottom: 0 !important; padding-bottom: 0 !important; }
 /* Reduce bottom gap by letting this page's content shrink to content height */
-/* Clean, solid-white background for this page only (no gradients) */
+/* Clean, solid-white background for this page only (no gradients)
+   IMPORTANT: keep content scrollable inside the admin flex layout */
 .content-area { 
-    min-height: calc(100vh - 60px) !important; 
+    min-height: 0 !important;
+    max-height: calc(100vh - 60px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     padding-bottom: 0 !important; 
-    flex: 1 0 auto !important; 
+    flex: 1 1 auto !important;
     background: #ffffff !important; 
     background-image: none !important;
 }
