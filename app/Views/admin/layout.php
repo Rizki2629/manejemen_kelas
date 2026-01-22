@@ -286,7 +286,7 @@
 
         /* ===== Light theme overrides for existing sidebar markup ===== */
         .sidebar .sidebar-text h1 {
-            color: #0f172a !important;
+            color: #6d28d9 !important;
         }
 
         .sidebar .sidebar-text p {
@@ -298,16 +298,7 @@
             color: #94a3b8 !important;
         }
 
-        /* Logo area polish */
-        .sidebar .logo-box {
-            background: #ede9fe !important;
-            border-color: rgba(226, 232, 240, 1) !important;
-            box-shadow: none !important;
-        }
-
-        .sidebar .logo-box i {
-            color: #6d28d9 !important;
-        }
+        /* Logo area removed */
 
         /* Brand typography (single-line title + badge) */
         .sidebar .sidebar-text h1 {
@@ -852,15 +843,10 @@
         <!-- Logo Section -->
         <div class="p-6 border-b border-white/20 relative bg-gradient-to-r from-white/5 to-transparent">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <!-- Logo icon: changed to perfect square with slightly smaller radius to avoid elongated look -->
-                    <div class="logo-box bg-white/15 flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-lg">
-                        <i class="fas fa-graduation-cap text-white text-xl"></i>
-                    </div>
+                <div class="flex items-center">
                     <div class="sidebar-text">
                         <h1 class="text-white text-xl font-bold tracking-tight school-name">
-                            <span>SDN Grogol Utara</span>
-                            <span class="school-code">09</span>
+                            <span>SDN Grogol Utara 09</span>
                         </h1>
                         <p class="text-white/80 text-sm font-medium">Aplikasi Pengelolaan Sekolah</p>
                         <div class="flex items-center mt-1">
