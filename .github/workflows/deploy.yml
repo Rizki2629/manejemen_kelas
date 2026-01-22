@@ -1,4 +1,4 @@
-name: Deploy to Office Server
+name: Deploy to Office Server (PHP/XAMPP)
 
 on:
   push:
@@ -6,28 +6,27 @@ on:
 
 jobs:
   deploy:
-    # Bagian ini kuncinya. Kita suruh job ini jalan di komputer kantor Anda
     runs-on: self-hosted
-
+    
     steps:
+      # 1. Ambil kode terbaru dari GitHub ke folder Runner sementara (_work)
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          # Penting: matikan clean jika Anda tidak ingin menghapus file config lokal/env
-          clean: false
+          clean: true 
 
-      - name: Pull latest changes
+      # 2. Pindahkan file dari folder Runner ke folder XAMPP htdocs yang asli
+      #    Script ini menggunakan PowerShell (bawaan Windows)
+      - name: Deploy files to XAMPP
+        shell: powershell
         run: |
-          # Asumsikan runner dijalankan di folder proyek atau Anda navigasi ke sana
-          # Sesuaikan path jika perlu
-          git pull origin main
+          # Tentukan folder tujuan website Anda di sini
+          $target = "C:\xampp\htdocs\manajemen_kelas-main"
 
-      - name: Install Dependencies & Restart
-        run: |
-          # Contoh jika pakai Node.js
-          npm install
-          # Jika pakai PM2 untuk process manager
-          pm2 restart nama-aplikasi
+          # Info proses
+          Write-Host "Sedang menyalin file ke $target ..."
 
-          # Contoh jika pakai Docker
-          # docker-compose up -d --build
+          # Perintah copy (Force = timpa file lama, Recurse = beserta subfolder)
+          Copy-Item -Path ".\*" -Destination $target -Recurse -Force
+
+          Write-Host "Deploy Berhasil! Website sudah terupdate."
