@@ -55,6 +55,11 @@ $routes->get('absensi-mobile/lookup', 'AbsensiMobileController::lookup');
 $routes->get('absensi-mobile/reverse-geocode', 'AbsensiMobileController::reverseGeocode');
 $routes->post('absensi-mobile/submit', 'AbsensiMobileController::submit');
 
+// Rekap Absensi Mobile (Public - untuk monitoring)
+$routes->get('rekap-absen-mobile', 'AbsensiMobileController::rekap');
+$routes->get('rekap-absen-mobile/photo/(:num)', 'AbsensiMobileController::photo/$1');
+$routes->post('rekap-absen-mobile/delete/(:num)', 'AbsensiMobileController::delete/$1');
+
 // Admin Routes Group
 $routes->group('admin', function ($routes) {
     // Default admin route - redirect to dashboard

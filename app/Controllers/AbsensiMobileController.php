@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\AbsensiMobileModel;
 use App\Models\SiswaModel;
+use CodeIgniter\I18n\Time;
 
 class AbsensiMobileController extends BaseController
 {
@@ -141,15 +142,30 @@ class AbsensiMobileController extends BaseController
             return $this->response->setJSON(['ok' => false, 'message' => 'File foto tidak valid.'])->setStatusCode(400);
         }
 
-        if (!$photo->isImage()) {
-            return $this->response->setJSON(['ok' => false, 'message' => 'File harus berupa gambar.'])->setStatusCode(400);
+        // CI4 UploadedFile tidak selalu punya isImage(); validasi pakai MIME.
+        $mime = '';
+        try {
+            $mime = (string) $photo->getMimeType();
+        } catch (\Throwable $e) {
+            $mime = '';
+        }
+        if ($mime === '') {
+            try {
+                $mime = (string) $photo->getClientMimeType();
+            } catch (\Throwable $e) {
+                $mime = '';
+            }
+        }
+        $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if ($mime === '' || !in_array(strtolower($mime), $allowedMimes, true)) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'File harus berupa gambar (JPG/PNG/WebP).'])->setStatusCode(400);
         }
 
         if ($photo->getSize() > 4 * 1024 * 1024) {
             return $this->response->setJSON(['ok' => false, 'message' => 'Ukuran foto terlalu besar (maks 4MB).'])->setStatusCode(400);
         }
 
-        $today = date('Y-m-d');
+        $today = Time::now(app_timezone())->toDateString();
 
         $lat = $this->request->getPost('latitude');
         $lon = $this->request->getPost('longitude');
@@ -165,21 +181,50 @@ class AbsensiMobileController extends BaseController
         if ($deviceTakenAt !== '') {
             try {
                 $dt = new \DateTime($deviceTakenAt);
+                $dt->setTimezone(new \DateTimeZone(app_timezone()));
                 $deviceTakenAtDb = $dt->format('Y-m-d H:i:s');
             } catch (\Throwable $e) {
                 $deviceTakenAtDb = null;
             }
         }
 
-        // folder: writable/uploads/absensi-mobile/YYYYMMDD
-        $subdir = 'absensi-mobile/' . date('Ymd');
+        $absensiMobileModel = new AbsensiMobileModel();
+
+        // 1 NISN hanya boleh absen 1 kali per tanggal
+        $existing = $absensiMobileModel
+            ->where('siswa_id', (int) $student['id'])
+            ->where('tanggal', $today)
+            ->first();
+        if ($existing) {
+            return $this->response->setJSON([
+                'ok' => false,
+                'message' => 'NISN ini sudah absen hari ini.',
+            ])->setStatusCode(409);
+        }
+
+        // folder: writable/uploads/absensi-mobile-YYYYMMDD
+        $subdir = 'absensi-mobile-' . date('Ymd');
         $targetDir = rtrim(WRITEPATH, '/\\') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subdir);
         if (!is_dir($targetDir)) {
             @mkdir($targetDir, 0775, true);
         }
 
         $safeNisn = preg_replace('/[^0-9A-Za-z_-]/', '', $nisn);
-        $filename = $safeNisn . '_' . date('His') . '_' . bin2hex(random_bytes(4)) . '.jpg';
+        $safeNama = preg_replace('/[^0-9A-Za-z_-]+/', '-', (string) ($student['nama'] ?? ''));
+        $safeNama = trim($safeNama, '-');
+        if ($safeNama === '') {
+            $safeNama = 'siswa';
+        }
+        $safeKelas = preg_replace('/[^0-9A-Za-z_-]+/', '-', (string) ($student['kelas'] ?? ''));
+        $safeKelas = trim($safeKelas, '-');
+        if ($safeKelas === '') {
+            $safeKelas = 'kelas';
+        }
+
+        // nama file: nama-siswa-kelas-nisn.jpg
+        $filenameBase = $safeNama . '-' . $safeKelas . '-' . $safeNisn;
+        $filenameBase = substr($filenameBase, 0, 140);
+        $filename = $filenameBase . '.jpg';
 
         try {
             $photo->move($targetDir, $filename, true);
@@ -188,13 +233,6 @@ class AbsensiMobileController extends BaseController
         }
 
         $relativePath = 'uploads/' . $subdir . '/' . $filename;
-
-        $absensiMobileModel = new AbsensiMobileModel();
-
-        $existing = $absensiMobileModel
-            ->where('siswa_id', (int) $student['id'])
-            ->where('tanggal', $today)
-            ->first();
 
         $payload = [
             'siswa_id' => (int) $student['id'],
@@ -212,18 +250,115 @@ class AbsensiMobileController extends BaseController
             'user_agent' => substr((string) ($this->request->getUserAgent() ?? ''), 0, 255),
         ];
 
-        if ($existing) {
-            $absensiMobileModel->update($existing['id'], $payload);
-            $id = (int) $existing['id'];
-        } else {
-            $id = (int) $absensiMobileModel->insert($payload, true);
-        }
+        $id = (int) $absensiMobileModel->insert($payload, true);
 
         return $this->response->setJSON([
             'ok' => true,
             'message' => 'Absensi berhasil disimpan.',
             'id' => $id,
         ]);
+    }
+
+    public function rekap()
+    {
+        $model = new AbsensiMobileModel();
+
+        $date = trim((string) $this->request->getGet('date'));
+        if ($date !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $date = '';
+        }
+
+        $q = $model->orderBy('tanggal', 'DESC')->orderBy('created_at', 'DESC');
+        if ($date !== '') {
+            $q->where('tanggal', $date);
+        }
+
+        // Batasi agar halaman tidak berat
+        $rows = $q->findAll(500);
+
+        $grouped = [];
+        foreach ($rows as $r) {
+            $d = (string) ($r['tanggal'] ?? '');
+            if ($d === '') {
+                $d = 'unknown';
+            }
+            if (!isset($grouped[$d])) {
+                $grouped[$d] = [];
+            }
+            $grouped[$d][] = $r;
+        }
+
+        return view('absensi_mobile/rekap', [
+            'date' => $date,
+            'grouped' => $grouped,
+            'total' => count($rows),
+        ]);
+    }
+
+    public function photo($id)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $model = new AbsensiMobileModel();
+        $row = $model->find($id);
+        if (!$row) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $photoPath = (string) ($row['photo_path'] ?? '');
+        $photoPath = str_replace('\\', '/', $photoPath);
+        if ($photoPath === '' || !str_starts_with($photoPath, 'uploads/')) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $relative = substr($photoPath, strlen('uploads/'));
+        $filepath = rtrim(WRITEPATH, '/\\') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+
+        $ext = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        if (!in_array($ext, $allowedExts, true) || !is_file($filepath)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        return $this->response
+            ->setHeader('Content-Type', mime_content_type($filepath))
+            ->setHeader('Cache-Control', 'private, max-age=3600')
+            ->setBody((string) file_get_contents($filepath));
+    }
+
+    public function delete($id)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'ID tidak valid.'])->setStatusCode(400);
+        }
+
+        $model = new AbsensiMobileModel();
+        $row = $model->find($id);
+        if (!$row) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Data tidak ditemukan.'])->setStatusCode(404);
+        }
+
+        $photoPath = (string) ($row['photo_path'] ?? '');
+        $photoPath = str_replace('\\', '/', $photoPath);
+        $filepath = null;
+        if ($photoPath !== '' && str_starts_with($photoPath, 'uploads/')) {
+            $relative = substr($photoPath, strlen('uploads/'));
+            $filepath = rtrim(WRITEPATH, '/\\') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+        }
+
+        if (!$model->delete($id)) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Gagal menghapus data.'])->setStatusCode(500);
+        }
+
+        if ($filepath && is_file($filepath)) {
+            @unlink($filepath);
+        }
+
+        return $this->response->setJSON(['ok' => true, 'message' => 'Data berhasil dihapus.']);
     }
 
     private function formatAddressLines(string $displayName): array
@@ -263,8 +398,28 @@ class AbsensiMobileController extends BaseController
             ?? $address['path']
             ?? $address['residential']
             ?? $address['service']
+            ?? $address['locality']
+            ?? $address['quarter']
+            ?? $address['neighbourhood']
             ?? ''
         );
+
+        $houseNumber = (string) ($address['house_number'] ?? '');
+        if ($road !== '' && $houseNumber !== '') {
+            $road = $road . ' No ' . $houseNumber;
+        }
+
+        if ($road === '') {
+            $name = is_array($json) ? (string) ($json['name'] ?? '') : '';
+            $place = (string) (
+                $address['amenity']
+                ?? $address['shop']
+                ?? $address['tourism']
+                ?? $address['building']
+                ?? ''
+            );
+            $road = $name !== '' ? $name : $place;
+        }
 
         if ($road === '' && $displayName !== '') {
             // Fallback: bagian pertama dari display_name biasanya nama jalan/area kecil
@@ -277,18 +432,20 @@ class AbsensiMobileController extends BaseController
             $address['village']
             ?? $address['hamlet']
             ?? $address['neighbourhood']
+            ?? $address['suburb']
+            ?? $address['quarter']
             ?? ''
         );
         $kecamatan = (string) (
-            $address['suburb']
-            ?? $address['city_district']
+            $address['city_district']
             ?? $address['district']
+            ?? $address['municipality']
+            ?? $address['suburb']
             ?? ''
         );
         $kota = (string) (
             $address['city']
             ?? $address['town']
-            ?? $address['municipality']
             ?? $address['county']
             ?? ''
         );
@@ -298,6 +455,18 @@ class AbsensiMobileController extends BaseController
             ?? ''
         );
         $postcode = (string) ($address['postcode'] ?? '');
+
+        // Dedupe agar tidak tampil ganda
+        $norm = static fn($v) => strtolower(trim((string) $v));
+        if ($kelurahan !== '' && $kecamatan !== '' && $norm($kelurahan) === $norm($kecamatan)) {
+            $kecamatan = '';
+        }
+        if ($kota !== '' && $kecamatan !== '' && $norm($kota) === $norm($kecamatan)) {
+            $kecamatan = '';
+        }
+        if ($kota !== '' && $kelurahan !== '' && $norm($kota) === $norm($kelurahan)) {
+            $kota = '';
+        }
 
         $lines = [];
         if ($road !== '') {

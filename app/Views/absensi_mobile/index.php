@@ -158,6 +158,7 @@
       -webkit-backdrop-filter: none;
       display: none;
       white-space: pre-line;
+      text-align: right;
       z-index: 3;
     }
 
@@ -307,26 +308,47 @@
     if (!state.student) return [];
 
     const tstamp = fmtNow();
-    const roadLine = (state.overlayLoc.road || state.overlayLoc.lines[0] || '').trim();
-    const kelKec = [state.overlayLoc.kelurahan, state.overlayLoc.kecamatan].filter(Boolean).join(', ');
-    const kotaProv = [state.overlayLoc.kota, state.overlayLoc.provinsi].filter(Boolean).join(', ');
-    const fallbackLine2 = state.overlayLoc.lines[1] || '';
-    const fallbackLine3 = state.overlayLoc.lines[2] || '';
+    const norm = (v) => String(v || '').trim();
+    const uniqParts = (arr) => {
+      const out = [];
+      const seen = new Set();
+      for (const raw of arr) {
+        const v = norm(raw);
+        if (!v) continue;
+        const k = v.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(v);
+      }
+      return out;
+    };
+
+    const kelKec = uniqParts([state.overlayLoc.kelurahan, state.overlayLoc.kecamatan]).join(', ');
+    const kotaProv = uniqParts([state.overlayLoc.kota, state.overlayLoc.provinsi]).join(', ');
+
+    const rawLine0 = norm(state.overlayLoc.lines[0]);
+    const rawLine1 = norm(state.overlayLoc.lines[1]);
+    const rawLine2 = norm(state.overlayLoc.lines[2]);
+    const roadLine = norm(state.overlayLoc.road) || (rawLine0 && rawLine0.toLowerCase() !== kelKec.toLowerCase() ? rawLine0 : '');
+    const fallbackLine2 = rawLine1;
+    const fallbackLine3 = rawLine2;
 
     const base = [
       `${state.student.nama} - ${state.student.kelas || ''}`.trim(),
       tstamp,
     ];
 
-    if (state.overlayLoc.fetching) {
-      return [...base, 'Mengambil lokasi...'];
-    }
-
     const locLines = [
       roadLine,
-      (kelKec || fallbackLine2).trim(),
-      (kotaProv || fallbackLine3).trim(),
+      norm(kelKec || fallbackLine2),
+      norm(kotaProv || fallbackLine3),
     ].filter(Boolean);
+
+    // Saat masih fetch, tampilkan alamat yang sudah ada (jika ada).
+    // Jangan paksa menampilkan "Mengambil lokasi..." kalau preview sudah punya lokasi.
+    if (state.overlayLoc.fetching && locLines.length === 0) {
+      return [...base, 'Mengambil lokasi...'];
+    }
 
     return [...base, ...locLines].filter(Boolean);
   }
