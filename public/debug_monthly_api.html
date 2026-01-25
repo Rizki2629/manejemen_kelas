@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Monthly API</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+        .error { background: #ffe6e6; color: #d32f2f; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+        .warning { background: #fff3e0; color: #f57c00; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>Debug Monthly API Endpoint</h1>
+    
+    <div id="status">Loading...</div>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                statusDiv.innerHTML = 'Testing API endpoint...';
+                
+                // Test dengan berbagai bulan
+                const months = ['2025-08', '2025-07', '2025-09'];
+                
+                for (const month of months) {
+                    const result = document.createElement('div');
+                    result.className = 'result';
+                    
+                    try {
+                        const url = `siswa/habits/monthly-data?month=${month}`;
+                        console.log(`Testing URL: ${url}`);
+                        
+                        const response = await fetch(url, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        });
+                        
+                        console.log(`Response status for ${month}:`, response.status);
+                        console.log('Response headers:', [...response.headers.entries()]);
+                        
+                        const responseText = await response.text();
+                        console.log(`Raw response for ${month}:`, responseText);
+                        
+                        if (!response.ok) {
+                            result.className += ' error';
+                            result.innerHTML = `
+                                <h3>❌ Error for month ${month}</h3>
+                                <p>Status: ${response.status} ${response.statusText}</p>
+                                <p>Response:</p>
+                                <pre>${responseText}</pre>
+                            `;
+                        } else {
+                            let jsonData;
+                            try {
+                                jsonData = JSON.parse(responseText);
+                                result.className += ' success';
+                                result.innerHTML = `
+                                    <h3>✅ Success for month ${month}</h3>
+                                    <p>Data entries: ${Object.keys(jsonData.data || {}).length}</p>
+                                    <p>Available dates: ${Object.keys(jsonData.data || {}).join(', ')}</p>
+                                    <details>
+                                        <summary>Full Response</summary>
+                                        <pre>${JSON.stringify(jsonData, null, 2)}</pre>
+                                    </details>
+                                `;
+                            } catch (e) {
+                                result.className += ' warning';
+                                result.innerHTML = `
+                                    <h3>⚠️ Invalid JSON for month ${month}</h3>
+                                    <p>Response:</p>
+                                    <pre>${responseText}</pre>
+                                `;
+                            }
+                        }
+                        
+                    } catch (error) {
+                        result.className += ' error';
+                        result.innerHTML = `
+                            <h3>❌ Network Error for month ${month}</h3>
+                            <p>Error: ${error.message}</p>
+                        `;
+                        console.error(`Error testing ${month}:`, error);
+                    }
+                    
+                    resultsDiv.appendChild(result);
+                }
+                
+                statusDiv.innerHTML = 'Testing completed!';
+                
+            } catch (error) {
+                statusDiv.innerHTML = `Error: ${error.message}`;
+                console.error('Test error:', error);
+            }
+        }
+        
+        // Auto-run test when page loads
+        document.addEventListener('DOMContentLoaded', testAPI);
+    </script>
+</body>
+</html>
