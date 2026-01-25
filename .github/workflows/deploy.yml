@@ -1,0 +1,32 @@
+name: Deploy to Office Server (PHP/XAMPP)
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+      # 1. Ambil kode terbaru dari GitHub ke folder Runner sementara (_work)
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          clean: true 
+
+      # 2. Pindahkan file dari folder Runner ke folder XAMPP htdocs yang asli
+      #    Script ini menggunakan PowerShell (bawaan Windows)
+      - name: Deploy files to XAMPP
+        shell: powershell
+        run: |
+          # Tentukan folder tujuan website Anda di sini
+          $target = "C:\xampp\htdocs\manajemen_kelas-main"
+
+          # Info proses
+          Write-Host "Sedang menyalin file ke $target ..."
+
+          # Perintah copy (Force = timpa file lama, Recurse = beserta subfolder)
+          Copy-Item -Path ".\*" -Destination $target -Recurse -Force
+
+          Write-Host "Deploy Berhasil! Website sudah terupdate."

@@ -1,0 +1,391 @@
+/* 📱 MOBILE & PRINT OPTIMIZATIONS FOR REKAP ABSENSI */
+
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 992px) {
+    .filter-section .row {
+        justify-content: center;
+    }
+    
+    .filter-section .col-md-3,
+    .filter-section .col-md-2 {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .excel-style-table {
+        font-size: 8px;
+    }
+    
+    .excel-style-table .day-header,
+    .excel-style-table .day-cell {
+        width: 18px;
+        padding: 1px;
+        font-size: 8px;
+    }
+    
+    .excel-style-table .student-name {
+        max-width: 80px;
+        font-size: 9px;
+    }
+    
+    .excel-style-table .no-col {
+        width: 25px;
+        font-size: 8px;
+    }
+    
+    .header-section h2 {
+        font-size: 1.2rem;
+    }
+    
+    .header-section .school-info {
+        font-size: 14px;
+    }
+    
+    .header-section .class-info {
+        font-size: 12px;
+    }
+    
+    .filter-section {
+        padding: 10px;
+    }
+    
+    .btn-excel {
+        padding: 8px 16px;
+        font-size: 11px;
+    }
+}
+
+/* 🖨️ PRINT OPTIMIZATION */
+@media print {
+    /* Hide non-essential elements */
+    .filter-section,
+    .btn-excel,
+    .loading-overlay,
+    .status-indicator {
+        display: none !important;
+    }
+    
+    /* Page setup */
+    @page {
+        size: A4 landscape;
+        margin: 0.5cm;
+    }
+    
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        color: #000;
+        background: white;
+    }
+    
+    .container-fluid {
+        padding: 0;
+        margin: 0;
+        max-width: none;
+    }
+    
+    /* Header optimization */
+    .header-section {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+        border: 2px solid #000;
+        margin-bottom: 10px;
+        padding: 15px;
+        page-break-inside: avoid;
+    }
+    
+    .header-section h2 {
+        font-size: 18px;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    
+    .header-section .school-info {
+        font-size: 16px;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    
+    .header-section .class-info {
+        font-size: 14px;
+        text-align: center;
+    }
+    
+    /* Table optimization */
+    .table-container {
+        overflow: visible !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+    
+    .excel-style-table {
+        width: 100%;
+        font-size: 9px;
+        border-collapse: collapse;
+        page-break-inside: auto;
+    }
+    
+    .excel-style-table th,
+    .excel-style-table td {
+        border: 1px solid #000 !important;
+        padding: 2px 3px;
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    .excel-style-table th {
+        background-color: #E5E5E5 !important;
+        color: #000 !important;
+        font-weight: bold;
+        font-size: 8px;
+    }
+    
+    .excel-style-table .student-name {
+        text-align: left;
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-left: 5px;
+        position: static;
+        background-color: white !important;
+    }
+    
+    .excel-style-table .no-col {
+        width: 25px;
+        position: static;
+        background-color: white !important;
+    }
+    
+    .excel-style-table .day-header {
+        width: 20px;
+        font-size: 7px;
+        background-color: #E5E5E5 !important;
+        color: #000 !important;
+    }
+    
+    .excel-style-table .day-header.weekend {
+        background-color: #D0D0D0 !important;
+        color: #000 !important;
+    }
+    
+    .excel-style-table .day-cell {
+        width: 20px;
+        font-size: 8px;
+    }
+    
+    .excel-style-table .day-cell.weekend {
+        background-color: #F5F5F5 !important;
+        color: #000 !important;
+    }
+    
+    .excel-style-table .summary-cell {
+        background-color: #E5E5E5 !important;
+        font-weight: bold;
+        border-left: 2px solid #000 !important;
+    }
+    
+    .excel-style-table .summary-row {
+        background-color: #D0D0D0 !important;
+        font-weight: bold;
+    }
+    
+    .excel-style-table .summary-row td {
+        background-color: #D0D0D0 !important;
+        border-top: 2px solid #000 !important;
+    }
+    
+    /* Attendance marks */
+    .attendance-mark {
+        font-weight: bold;
+    }
+    
+    .attendance-mark.hadir {
+        color: #000;
+    }
+    
+    .attendance-mark.sakit {
+        color: #000;
+    }
+    
+    .attendance-mark.izin {
+        color: #000;
+    }
+    
+    .attendance-mark.alpha {
+        color: #000;
+        background-color: #E5E5E5 !important;
+    }
+    
+    /* Prevent page breaks in critical areas */
+    .header-section,
+    .excel-style-table thead {
+        page-break-inside: avoid;
+        page-break-after: avoid;
+    }
+    
+    .excel-style-table tbody tr {
+        page-break-inside: avoid;
+    }
+    
+    .excel-style-table .summary-row {
+        page-break-inside: avoid;
+        page-break-before: avoid;
+    }
+}
+
+/* 🌐 ACCESSIBILITY IMPROVEMENTS */
+@media (prefers-reduced-motion: reduce) {
+    .loading-spinner {
+        animation: none;
+    }
+    
+    .btn-excel,
+    .form-control,
+    .form-select {
+        transition: none;
+    }
+}
+
+@media (prefers-high-contrast: high) {
+    .excel-style-table th {
+        background-color: #000 !important;
+        color: #fff !important;
+    }
+    
+    .excel-style-table .day-header.weekend {
+        background-color: #800000 !important;
+        color: #fff !important;
+    }
+    
+    .filter-section {
+        background: #000 !important;
+        color: #fff !important;
+    }
+}
+
+/* 📐 LANDSCAPE ORIENTATION OPTIMIZATION */
+@media screen and (orientation: landscape) and (max-width: 1024px) {
+    .excel-style-table {
+        font-size: 10px;
+    }
+    
+    .excel-style-table .day-header,
+    .excel-style-table .day-cell {
+        width: 22px;
+        font-size: 9px;
+    }
+    
+    .filter-section {
+        padding: 15px;
+    }
+    
+    .header-section {
+        padding: 20px;
+    }
+}
+
+/* 🎯 FOCUS IMPROVEMENTS */
+.excel-style-table:focus-within {
+    outline: 2px solid #4472C4;
+    outline-offset: 2px;
+}
+
+.btn-excel:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: 2px solid #4472C4;
+    outline-offset: 2px;
+}
+
+/* 🔄 LOADING STATES */
+.loading-overlay {
+    backdrop-filter: blur(5px);
+}
+
+.loading-spinner {
+    border-width: 4px;
+}
+
+@media (max-width: 576px) {
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
+    }
+}
+
+/* 📊 STATUS INDICATORS */
+.status-indicator {
+    animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 🎨 ENHANCED VISUAL FEEDBACK */
+.excel-style-table tbody tr:hover {
+    background-color: rgba(68, 114, 196, 0.1);
+    transition: background-color 0.2s ease;
+}
+
+.excel-style-table tbody tr:hover .student-name,
+.excel-style-table tbody tr:hover .no-col {
+    background-color: rgba(68, 114, 196, 0.1);
+}
+
+/* 📱 TOUCH IMPROVEMENTS */
+@media (pointer: coarse) {
+    .btn-excel {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    .form-control,
+    .form-select {
+        padding: 12px 15px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
+
+/* ⚡ PERFORMANCE OPTIMIZATIONS */
+.excel-style-table {
+    will-change: scroll-position;
+    contain: layout style paint;
+}
+
+.excel-style-table .student-name,
+.excel-style-table .no-col {
+    will-change: transform;
+}
+
+/* 🎯 CRITICAL CSS FOR ABOVE-THE-FOLD CONTENT */
+.header-section,
+.filter-section {
+    contain: layout style;
+}
+
+/* 📐 CONTAINER QUERY SUPPORT (Future-proofing) */
+@supports (container-type: inline-size) {
+    .table-container {
+        container-type: inline-size;
+    }
+    
+    @container (max-width: 600px) {
+        .excel-style-table {
+            font-size: 9px;
+        }
+    }
+}
