@@ -49,6 +49,12 @@ $routes->get('/rekap-enhanced/export-excel', 'Admin\AbsensiEnhanced::exportExcel
 $routes->get('/login', 'Login::index');
 $routes->post('/login', 'Login::authenticate');
 
+// Absensi Mobile (Public - tanpa login)
+$routes->get('absensi-mobile', 'AbsensiMobileController::index');
+$routes->get('absensi-mobile/lookup', 'AbsensiMobileController::lookup');
+$routes->get('absensi-mobile/reverse-geocode', 'AbsensiMobileController::reverseGeocode');
+$routes->post('absensi-mobile/submit', 'AbsensiMobileController::submit');
+
 // Admin Routes Group
 $routes->group('admin', function ($routes) {
     // Default admin route - redirect to dashboard

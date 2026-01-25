@@ -849,11 +849,7 @@
                         <h1 class="text-white text-xl font-bold tracking-tight school-name">
                             <span>SDN Grogol Utara 09</span>
                         </h1>
-                        <p class="text-white/80 text-sm font-medium">Aplikasi Pengelolaan Sekolah</p>
-                        <div class="flex items-center mt-1">
-                            <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                            <span class="text-white/60 text-xs">Online</span>
-                        </div>
+                        <p class="text-white/80 text-sm font-medium">Aplikasi Manajemen kelas</p>
                     </div>
                 </div>
             </div>
