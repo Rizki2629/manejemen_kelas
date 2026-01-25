@@ -53,7 +53,7 @@ class AbsensiModel extends Model
     public function getAttendanceByClassAndDate($kelasId, $tanggal)
     {
         $db = \Config\Database::connect();
-        
+
         $query = "
             SELECT a.*, s.nama, s.nipd
             FROM absensi a
@@ -61,7 +61,7 @@ class AbsensiModel extends Model
             WHERE s.kelas = ? AND a.tanggal = ?
             ORDER BY s.nama ASC
         ";
-        
+
         return $db->query($query, [$kelasId, $tanggal])->getResultArray();
     }
 
@@ -71,7 +71,7 @@ class AbsensiModel extends Model
     public function getStudentsWithAttendance($kelasId, $tanggal)
     {
         $db = \Config\Database::connect();
-        
+
         $query = $db->query("
             SELECT 
                 s.id as siswa_id,
@@ -88,7 +88,7 @@ class AbsensiModel extends Model
             WHERE s.kelas = ? AND s.deleted_at IS NULL
             ORDER BY s.nama ASC
         ", [$tanggal, $kelasId]);
-        
+
         return $query->getResultArray();
     }
 
@@ -98,19 +98,19 @@ class AbsensiModel extends Model
     public function saveAttendance($data)
     {
         log_message('debug', 'AbsensiModel::saveAttendance - Input data: ' . json_encode($data));
-        
+
         // Validate data first
         if (!$this->validate($data)) {
             $errors = $this->errors();
             log_message('debug', 'AbsensiModel::saveAttendance - Validation failed: ' . json_encode($errors));
             return false;
         }
-        
+
         try {
             // Check if attendance already exists
             $existing = $this->where('siswa_id', $data['siswa_id'])
-                            ->where('tanggal', $data['tanggal'])
-                            ->first();
+                ->where('tanggal', $data['tanggal'])
+                ->first();
 
             log_message('debug', 'AbsensiModel::saveAttendance - Existing record: ' . json_encode($existing));
 
@@ -121,31 +121,31 @@ class AbsensiModel extends Model
                     'keterangan' => $data['keterangan'] ?? '',
                     'created_by' => $data['created_by']
                 ];
-                
+
                 log_message('debug', 'AbsensiModel::saveAttendance - Updating existing record ID: ' . $existing['id']);
                 $result = $this->update($existing['id'], $updateData);
                 log_message('debug', 'AbsensiModel::saveAttendance - Update result: ' . ($result ? 'success' : 'failed'));
-                
+
                 if (!$result) {
                     $errors = $this->errors();
                     log_message('debug', 'AbsensiModel::saveAttendance - Update errors: ' . json_encode($errors));
                 }
-                
+
                 return $result;
             } else {
                 // Insert new record
                 log_message('debug', 'AbsensiModel::saveAttendance - Inserting new record');
                 $result = $this->insert($data);
                 log_message('debug', 'AbsensiModel::saveAttendance - Insert result: ' . ($result ? 'success' : 'failed'));
-                
+
                 if (!$result) {
                     $errors = $this->errors();
                     log_message('debug', 'AbsensiModel::saveAttendance - Insert errors: ' . json_encode($errors));
                 }
-                
+
                 return $result;
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             log_message('error', 'AbsensiModel::saveAttendance - Exception: ' . $e->getMessage());
             return false;
         }
@@ -157,7 +157,7 @@ class AbsensiModel extends Model
     public function getAttendanceRecap($startDate, $endDate, $kelasId = null)
     {
         $db = \Config\Database::connect();
-        
+
         $query = "
             SELECT 
                 a.tanggal,
@@ -171,16 +171,16 @@ class AbsensiModel extends Model
             WHERE a.tanggal >= ? AND a.tanggal <= ? 
             AND s.deleted_at IS NULL
         ";
-        
+
         $params = [$startDate, $endDate];
-        
+
         if ($kelasId) {
             $query .= " AND s.kelas = ?";
             $params[] = $kelasId;
         }
-        
+
         $query .= " ORDER BY a.tanggal ASC, s.kelas ASC, s.nama ASC";
-        
+
         return $db->query($query, $params)->getResultArray();
     }
 
@@ -191,9 +191,9 @@ class AbsensiModel extends Model
     {
         $startDate = "$year-$month-01";
         $endDate = date('Y-m-t', strtotime($startDate));
-        
+
         $db = \Config\Database::connect();
-        
+
         $query = "
             SELECT 
                 s.nipd,
@@ -208,16 +208,16 @@ class AbsensiModel extends Model
             WHERE a.tanggal >= ? AND a.tanggal <= ?
             AND s.deleted_at IS NULL
         ";
-        
+
         $params = [$startDate, $endDate];
-        
+
         if ($kelasId) {
             $query .= " AND s.kelas = ?";
             $params[] = $kelasId;
         }
-        
+
         $query .= " GROUP BY s.id ORDER BY s.kelas ASC, s.nama ASC";
-        
+
         return $db->query($query, $params)->getResultArray();
     }
 
@@ -230,7 +230,7 @@ class AbsensiModel extends Model
         if ($userRole === 'admin') {
             return true;
         }
-        
+
         // Wali kelas can only access their own class
         if ($userRole === 'wali_kelas' || $userRole === 'walikelas') {
             $db = \Config\Database::connect();
@@ -240,11 +240,11 @@ class AbsensiModel extends Model
                 JOIN walikelas w ON u.walikelas_id = w.id 
                 WHERE u.id = ? AND w.kelas = ?
             ", [$userId, $kelasId]);
-            
+
             $result = $query->getRowArray();
             return $result['count'] > 0;
         }
-        
+
         return false;
     }
 
@@ -258,27 +258,27 @@ class AbsensiModel extends Model
         $startDate = "$year-$monthStr-01";
         $endDate = date('Y-m-t', strtotime($startDate));
         $daysInMonth = date('t', strtotime($startDate));
-        
+
         // Create array of days for the month
         $days = [];
         for ($i = 1; $i <= $daysInMonth; $i++) {
             $days[] = $i;
         }
-        
+
         // Get all students for the class
         $studentBuilder = db_connect()->table('tb_siswa')
             ->select('id, nipd, nama, kelas, nisn')
             ->where('deleted_at IS NULL');
-            
+
         if ($kelasId) {
             $studentBuilder->where('kelas', $kelasId);
         }
-        
+
         $students = $studentBuilder->orderBy('nama', 'ASC')->get()->getResultArray();
-        
+
         // Get all attendance data for the month
         $db = \Config\Database::connect();
-        
+
         $attendanceQuery = "
             SELECT a.siswa_id, a.tanggal, a.status
             FROM absensi a
@@ -286,28 +286,28 @@ class AbsensiModel extends Model
             WHERE a.tanggal >= ? AND a.tanggal <= ? 
             AND s.deleted_at IS NULL
         ";
-        
+
         $attendanceParams = [$startDate, $endDate];
-        
+
         if ($kelasId) {
             $attendanceQuery .= " AND s.kelas = ?";
             $attendanceParams[] = $kelasId;
         }
-        
+
         $attendanceData = $db->query($attendanceQuery, $attendanceParams)->getResultArray();
-        
+
         // Organize attendance by student and date
         $attendanceByStudent = [];
         foreach ($attendanceData as $record) {
             $day = (int)date('j', strtotime($record['tanggal']));
             $attendanceByStudent[$record['siswa_id']][$day] = $record['status'];
         }
-        
+
         // Get holidays and weekends for the month
         $holidayData = $this->getHolidaysForMonth($year, $month);
         $holidays = $holidayData['dates'];
         $holidayDetails = $holidayData['details'];
-        
+
         // Build final result with daily attendance for each student
         $studentsData = [];
         foreach ($students as $student) {
@@ -327,20 +327,20 @@ class AbsensiModel extends Model
                 ],
                 'percentage' => 0
             ];
-            
+
             $totalDaysCount = 0;
             $hadirCount = 0;
-            
+
             // Fill in daily attendance
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
                 $currentDate = "$year-$monthStr-$dayStr";
                 $dayOfWeek = date('w', strtotime($currentDate));
-                
+
                 // Check if holiday or weekend FIRST (before checking future date)
                 $isHoliday = in_array($currentDate, $holidays);
                 $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6); // Sunday = 0, Saturday = 6
-                
+
                 if ($isHoliday || $isWeekend) {
                     // Set appropriate status based on type
                     if ($isHoliday && isset($holidayDetails[$currentDate])) {
@@ -353,20 +353,20 @@ class AbsensiModel extends Model
                     }
                     continue;
                 }
-                
+
                 // Check if there's actual attendance data for this day
                 $hasAttendanceData = isset($attendanceByStudent[$student['id']][$day]);
-                
+
                 // Check if future date (only for non-holidays and no existing data)
                 if (strtotime($currentDate) > time() && !$hasAttendanceData) {
                     $studentData['daily'][$dayStr] = null;
                     continue;
                 }
-                
+
                 $totalDaysCount++;
                 $status = $attendanceByStudent[$student['id']][$day] ?? 'alpha';
                 $studentData['daily'][$dayStr] = $status;
-                
+
                 // Count summary
                 switch ($status) {
                     case 'hadir':
@@ -384,13 +384,13 @@ class AbsensiModel extends Model
                         break;
                 }
             }
-            
+
             $studentData['summary']['total'] = $totalDaysCount;
             $studentData['percentage'] = $totalDaysCount > 0 ? ($hadirCount / $totalDaysCount) * 100 : 0;
-            
+
             $studentsData[] = $studentData;
         }
-        
+
         // Calculate effective days (total days minus holidays and weekends)
         $effectiveDays = 0;
         for ($day = 1; $day <= $daysInMonth; $day++) {
@@ -398,7 +398,7 @@ class AbsensiModel extends Model
             $dayOfWeek = date('w', strtotime($currentDate));
             $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
             $isHoliday = in_array($currentDate, $holidays);
-            
+
             // Count as effective day if not weekend and not holiday
             if (!$isWeekend && !$isHoliday) {
                 $effectiveDays++;
@@ -417,7 +417,75 @@ class AbsensiModel extends Model
             'total_days' => $daysInMonth
         ];
     }
-    
+
+    /**
+     * Get attendance percentage per class for a specific month
+     */
+    public function getClassAttendancePercentages($year, $month, $kelasId = null)
+    {
+        $monthStr = str_pad($month, 2, '0', STR_PAD_LEFT);
+        $startDate = "$year-$monthStr-01";
+        $endDate = date('Y-m-t', strtotime($startDate));
+
+        $effectiveDays = $this->getEffectiveDaysForMonth($year, $month);
+
+        // Get total students per class
+        $classBuilder = db_connect()->table('tb_siswa')
+            ->select('kelas, COUNT(*) as total_students')
+            ->where('deleted_at IS NULL');
+
+        if ($kelasId) {
+            $classBuilder->where('kelas', $kelasId);
+        }
+
+        $classes = $classBuilder->groupBy('kelas')->orderBy('kelas', 'ASC')->get()->getResultArray();
+
+        // Get total hadir per class for the month
+        $db = \Config\Database::connect();
+        $hadirQuery = "
+            SELECT s.kelas, COUNT(*) as total_hadir
+            FROM absensi a
+            JOIN tb_siswa s ON s.id = a.siswa_id
+            WHERE a.tanggal >= ? AND a.tanggal <= ?
+            AND a.status = 'hadir'
+            AND s.deleted_at IS NULL
+        ";
+
+        $params = [$startDate, $endDate];
+
+        if ($kelasId) {
+            $hadirQuery .= " AND s.kelas = ?";
+            $params[] = $kelasId;
+        }
+
+        $hadirQuery .= " GROUP BY s.kelas";
+        $hadirRows = $db->query($hadirQuery, $params)->getResultArray();
+
+        $hadirByClass = [];
+        foreach ($hadirRows as $row) {
+            $hadirByClass[$row['kelas']] = (int)$row['total_hadir'];
+        }
+
+        $result = [];
+        foreach ($classes as $classRow) {
+            $kelas = $classRow['kelas'];
+            $totalStudents = (int)$classRow['total_students'];
+            $totalHadir = $hadirByClass[$kelas] ?? 0;
+            $totalPossible = $totalStudents * $effectiveDays;
+            $percentage = $totalPossible > 0 ? ($totalHadir / $totalPossible) * 100 : 0;
+
+            $result[] = [
+                'kelas' => $kelas,
+                'total_students' => $totalStudents,
+                'total_hadir' => $totalHadir,
+                'effective_days' => $effectiveDays,
+                'percentage' => $percentage
+            ];
+        }
+
+        return $result;
+    }
+
     /**
      * Get holidays for a specific month from academic calendar
      */
@@ -427,9 +495,9 @@ class AbsensiModel extends Model
         $monthStr = str_pad($month, 2, '0', STR_PAD_LEFT);
         $startDate = "$year-$monthStr-01";
         $endDate = date('Y-m-t', strtotime($startDate));
-        
+
         $db = \Config\Database::connect();
-        
+
         // Get all holidays from academic calendar for the month
         $query = "
             SELECT tanggal_mulai, tanggal_selesai, status, keterangan
@@ -442,24 +510,27 @@ class AbsensiModel extends Model
             AND status IN ('libur_nasional', 'libur_sekolah', 'off')
             ORDER BY tanggal_mulai
         ";
-        
+
         $holidayRecords = $db->query($query, [
-            $startDate, $endDate, 
-            $startDate, $endDate, 
-            $startDate, $endDate
+            $startDate,
+            $endDate,
+            $startDate,
+            $endDate,
+            $startDate,
+            $endDate
         ])->getResultArray();
-        
+
         $holidays = [];
         $holidayDetails = [];
-        
+
         foreach ($holidayRecords as $record) {
             $start = strtotime($record['tanggal_mulai']);
             $end = strtotime($record['tanggal_selesai']);
-            
+
             // Add each day in the holiday range
             for ($current = $start; $current <= $end; $current = strtotime('+1 day', $current)) {
                 $dateStr = date('Y-m-d', $current);
-                
+
                 // Only include dates within our target month
                 if (date('Y-m', $current) === "$year-$monthStr") {
                     $holidays[] = $dateStr;
@@ -470,11 +541,38 @@ class AbsensiModel extends Model
                 }
             }
         }
-        
+
         return [
             'dates' => array_unique($holidays),
             'details' => $holidayDetails
         ];
+    }
+
+    /**
+     * Calculate effective school days for a specific month
+     */
+    private function getEffectiveDaysForMonth($year, $month)
+    {
+        $monthStr = str_pad($month, 2, '0', STR_PAD_LEFT);
+        $startDate = "$year-$monthStr-01";
+        $daysInMonth = (int)date('t', strtotime($startDate));
+
+        $holidayData = $this->getHolidaysForMonth($year, $month);
+        $holidays = $holidayData['dates'];
+
+        $effectiveDays = 0;
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $currentDate = sprintf('%04d-%02d-%02d', $year, $month, $day);
+            $dayOfWeek = date('w', strtotime($currentDate));
+            $isWeekend = ($dayOfWeek == 0 || $dayOfWeek == 6);
+            $isHoliday = in_array($currentDate, $holidays);
+
+            if (!$isWeekend && !$isHoliday) {
+                $effectiveDays++;
+            }
+        }
+
+        return $effectiveDays;
     }
 
     /**
@@ -483,7 +581,7 @@ class AbsensiModel extends Model
     public function getHolidayDetails($date)
     {
         $db = \Config\Database::connect();
-        
+
         $query = "
             SELECT status, keterangan
             FROM kalender_akademik 
@@ -491,13 +589,13 @@ class AbsensiModel extends Model
             AND status IN ('libur_nasional', 'libur_sekolah', 'off')
             LIMIT 1
         ";
-        
+
         $result = $db->query($query, [$date])->getRowArray();
-        
+
         if ($result) {
             return $result;
         }
-        
+
         // Check if it's weekend
         $dayOfWeek = date('w', strtotime($date));
         if ($dayOfWeek == 0 || $dayOfWeek == 6) {
@@ -506,7 +604,7 @@ class AbsensiModel extends Model
                 'keterangan' => $dayOfWeek == 0 ? 'Hari Minggu' : 'Hari Sabtu'
             ];
         }
-        
+
         return null;
     }
 }

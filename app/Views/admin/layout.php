@@ -928,12 +928,21 @@
                                     </div>
                                 </a>
 
-                                <a href="/admin/absensi/rekap" title="Rekap Absensi" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'admin/absensi/rekap') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                <a href="/admin/absensi/rekap" title="Rekap Absensi Bulanan" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'admin/absensi/rekap') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
                                     <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
                                         <i class="fas fa-chart-bar text-xs"></i>
                                     </div>
                                     <div class="menu-text">
-                                        <span class="text-sm font-medium">Rekap Absensi</span>
+                                        <span class="text-sm font-medium">Rekap Absensi Bulanan</span>
+                                    </div>
+                                </a>
+
+                                <a href="/admin/absensi/persentase" title="Persentase Kehadiran" class="group flex items-center space-x-3 py-2 px-4 rounded-lg <?= strpos(uri_string(), 'admin/absensi/persentase') !== false ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' ?> transition-all duration-200 transform hover:translate-x-1">
+                                    <div class="w-6 h-6 bg-white/15 rounded-md flex items-center justify-center">
+                                        <i class="fas fa-percent text-xs"></i>
+                                    </div>
+                                    <div class="menu-text">
+                                        <span class="text-sm font-medium">Persentase Kehadiran</span>
                                     </div>
                                 </a>
                             </div>

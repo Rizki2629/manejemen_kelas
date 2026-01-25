@@ -53,7 +53,7 @@ class Absensi extends BaseController
                 JOIN walikelas w ON u.walikelas_id = w.id 
                 WHERE u.id = ?
             ", [$userId]);
-            
+
             $result = $query->getRowArray();
             if (!$result) {
                 return redirect()->to('/admin')->with('error', 'Data wali kelas tidak ditemukan');
@@ -72,7 +72,7 @@ class Absensi extends BaseController
         // Determine if selected date is holiday/off (incl. weekend)
         $offDayInfo = $this->absensiModel->getHolidayDetails($selectedDate);
         $isOffDay = $offDayInfo !== null;
-        
+
         $selectedKelas = $this->request->getPost('kelas') ?? $this->request->getGet('kelas') ?? $userKelas;
 
         // Debug logging for AJAX requests
@@ -84,7 +84,7 @@ class Absensi extends BaseController
         $allKelas = [];
         if ($userRole === 'admin') {
             $allKelas = $this->tbSiswaModel->getActiveClasses();
-            
+
             // If admin hasn't selected a class yet, auto-select the first available class
             if (!$selectedKelas && !empty($allKelas)) {
                 $selectedKelas = $allKelas[0]['kelas'];
@@ -95,7 +95,7 @@ class Absensi extends BaseController
         if ($selectedKelas && !$this->absensiModel->canAccessClass($userId, $selectedKelas, $userRole)) {
             if ($this->request->isAJAX()) {
                 return $this->response->setJSON([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Anda tidak memiliki akses ke kelas tersebut'
                 ]);
             }
@@ -106,7 +106,7 @@ class Absensi extends BaseController
         $students = [];
         if ($selectedKelas) {
             $students = $this->absensiModel->getStudentsWithAttendance($selectedKelas, $selectedDate);
-            
+
             if ($this->request->isAJAX()) {
                 log_message('debug', 'AJAX Input Students Count: ' . count($students));
             }
@@ -147,7 +147,7 @@ class Absensi extends BaseController
 
         $userId = session()->get('user_id');
         $userRole = session()->get('role');
-        
+
         $siswaId = $this->request->getPost('siswa_id');
         $tanggal = $this->request->getPost('tanggal');
         $status = $this->request->getPost('status');
@@ -169,7 +169,7 @@ class Absensi extends BaseController
         // Validate access
         if (!$this->absensiModel->canAccessClass($userId, $kelas, $userRole)) {
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Anda tidak memiliki akses ke kelas tersebut'
             ]);
         }
@@ -184,12 +184,12 @@ class Absensi extends BaseController
 
         if ($this->absensiModel->saveAttendance($data)) {
             return $this->response->setJSON([
-                'success' => true, 
+                'success' => true,
                 'message' => 'Absensi berhasil disimpan'
             ]);
         } else {
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Gagal menyimpan absensi'
             ]);
         }
@@ -223,7 +223,7 @@ class Absensi extends BaseController
                 JOIN walikelas w ON u.walikelas_id = w.id 
                 WHERE u.id = ?
             ", [$userId]);
-            
+
             $result = $query->getRowArray();
             if ($result) {
                 $userKelas = $result['kelas'];
@@ -233,7 +233,7 @@ class Absensi extends BaseController
         // Get filter parameters
         $filterKelas = $this->request->getGet('kelas') ?? $userKelas;
         $filterBulan = $this->request->getGet('bulan') ?? date('Y-m');
-        
+
         // For wali kelas, force their class
         if ($userRole === 'wali_kelas' || $userRole === 'walikelas') {
             $filterKelas = $userKelas;
@@ -247,12 +247,19 @@ class Absensi extends BaseController
 
         // Get attendance summary
         $attendanceData = [];
-        if ($filterKelas && $filterBulan) {
+        $classAttendancePercentages = [];
+        if ($filterBulan) {
             list($year, $month) = explode('-', $filterBulan);
             // Ensure year and month are integers
             $year = (int)$year;
             $month = (int)$month;
-            $attendanceData = $this->absensiModel->getDetailedAttendanceRecap($year, $month, $filterKelas);
+
+            if ($filterKelas) {
+                $attendanceData = $this->absensiModel->getDetailedAttendanceRecap($year, $month, $filterKelas);
+            }
+
+            $summaryKelas = ($userRole === 'admin') ? null : $filterKelas;
+            $classAttendancePercentages = $this->absensiModel->getClassAttendancePercentages($year, $month, $summaryKelas);
         }
 
         // Additional data for Tailwind view
@@ -260,19 +267,87 @@ class Absensi extends BaseController
         $tahun = isset($filterBulan) ? (int)explode('-', $filterBulan)[0] : (int)date('Y');
 
         $data = [
-            'title' => 'Rekap Absensi',
+            'title' => 'Rekap Absensi Bulanan',
             'userRole' => $userRole,
             'userKelas' => $userKelas,
             'allKelas' => $allKelas,
             'filterKelas' => $filterKelas,
             'filterBulan' => $filterBulan,
             'attendanceData' => $attendanceData,
+            'classAttendancePercentages' => $classAttendancePercentages,
             'bulan_nama' => $bulan_nama,
             'tahun' => $tahun,
             'kelas' => $filterKelas
         ];
 
         return view('admin/absensi/rekap_tailwind', $data);
+    }
+
+    /**
+     * Persentase kehadiran per kelas - admin dapat filter, walikelas otomatis
+     */
+    public function persentaseKelas()
+    {
+        if (!session()->get('isLoggedIn')) {
+            return redirect()->to('/login');
+        }
+
+        $userRole = session()->get('role');
+        $userId = session()->get('user_id');
+
+        if (!in_array($userRole, ['admin', 'wali_kelas', 'walikelas'])) {
+            return redirect()->to('/admin')->with('error', 'Anda tidak memiliki akses ke halaman ini');
+        }
+
+        // Get user's class if wali kelas
+        $userKelas = null;
+        if ($userRole === 'wali_kelas' || $userRole === 'walikelas') {
+            $db = \Config\Database::connect();
+            $query = $db->query("\n                SELECT w.kelas \n                FROM users u \n                JOIN walikelas w ON u.walikelas_id = w.id \n                WHERE u.id = ?\n            ", [$userId]);
+
+            $result = $query->getRowArray();
+            if ($result) {
+                $userKelas = $result['kelas'];
+            }
+        }
+
+        $filterBulan = $this->request->getGet('bulan') ?? date('Y-m');
+        $filterKelas = $this->request->getGet('kelas') ?? $userKelas;
+
+        if ($userRole === 'wali_kelas' || $userRole === 'walikelas') {
+            $filterKelas = $userKelas;
+        }
+
+        $allKelas = [];
+        if ($userRole === 'admin') {
+            $allKelas = $this->tbSiswaModel->getActiveClasses();
+        }
+
+        $classAttendancePercentages = [];
+        if ($filterBulan) {
+            list($year, $month) = explode('-', $filterBulan);
+            $year = (int)$year;
+            $month = (int)$month;
+            $summaryKelas = ($userRole === 'admin') ? $filterKelas : $filterKelas;
+            $classAttendancePercentages = $this->absensiModel->getClassAttendancePercentages($year, $month, $summaryKelas);
+        }
+
+        $bulan_nama = isset($filterBulan) ? date('F', strtotime($filterBulan . '-01')) : date('F');
+        $tahun = isset($filterBulan) ? (int)explode('-', $filterBulan)[0] : (int)date('Y');
+
+        $data = [
+            'title' => 'Persentase Kehadiran Per Kelas',
+            'userRole' => $userRole,
+            'userKelas' => $userKelas,
+            'allKelas' => $allKelas,
+            'filterKelas' => $filterKelas,
+            'filterBulan' => $filterBulan,
+            'classAttendancePercentages' => $classAttendancePercentages,
+            'bulan_nama' => $bulan_nama,
+            'tahun' => $tahun,
+        ];
+
+        return view('admin/absensi/persentase_kelas', $data);
     }
 
     /**
@@ -287,14 +362,14 @@ class Absensi extends BaseController
         $startDate = $this->request->getPost('start_date');
         $endDate = $this->request->getPost('end_date');
         $kelas = $this->request->getPost('kelas');
-        
+
         $userId = session()->get('user_id');
         $userRole = session()->get('role');
 
         // Validate access
         if ($kelas && !$this->absensiModel->canAccessClass($userId, $kelas, $userRole)) {
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Anda tidak memiliki akses ke kelas tersebut'
             ]);
         }
@@ -333,7 +408,7 @@ class Absensi extends BaseController
                 JOIN walikelas w ON u.walikelas_id = w.id 
                 WHERE u.id = ?
             ", [$userId]);
-            
+
             $result = $query->getRowArray();
             if ($result) {
                 $kelas = $result['kelas'];
@@ -349,19 +424,19 @@ class Absensi extends BaseController
 
         // Set headers for CSV download
         $filename = "rekap_absensi_" . ($kelas ? "kelas_{$kelas}_" : "") . $startDate . "_to_" . $endDate . ".csv";
-        
+
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        
+
         // Create file pointer
         $output = fopen('php://output', 'w');
-        
+
         // Add BOM for UTF-8
         fputs($output, "\xEF\xBB\xBF");
-        
+
         // Add CSV headers
         fputcsv($output, ['Tanggal', 'No. Induk', 'Nama Siswa', 'Kelas', 'Status', 'Keterangan']);
-        
+
         // Add data rows
         foreach ($data as $row) {
             fputcsv($output, [
@@ -373,7 +448,7 @@ class Absensi extends BaseController
                 $row['keterangan']
             ]);
         }
-        
+
         fclose($output);
         exit;
     }
@@ -385,19 +460,19 @@ class Absensi extends BaseController
     {
         // Enable detailed error reporting
         log_message('debug', 'Save All - Start of method');
-        
+
         // More comprehensive request validation
-        $isAjax = $this->request->isAJAX() || 
-                  $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest' ||
-                  $this->request->getMethod() === 'post';
-        
+        $isAjax = $this->request->isAJAX() ||
+            $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest' ||
+            $this->request->getMethod() === 'post';
+
         // Get all request data for debugging
         $allPostData = $this->request->getPost();
         log_message('debug', 'Save All - All POST data: ' . json_encode($allPostData));
         log_message('debug', 'Save All - Request method: ' . $this->request->getMethod());
         log_message('debug', 'Save All - Content type: ' . $this->request->getHeaderLine('Content-Type'));
         log_message('debug', 'Save All - Is AJAX: ' . ($isAjax ? 'yes' : 'no'));
-        
+
         if (!$isAjax) {
             log_message('debug', 'Save All - Not AJAX request - Headers: ' . json_encode($this->request->getHeaders()));
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid request - Not AJAX']);
@@ -412,22 +487,22 @@ class Absensi extends BaseController
 
         $userId = $session->get('user_id');
         $userRole = $session->get('role');
-        
+
         log_message('debug', 'Save All - User ID: ' . $userId . ', Role: ' . $userRole);
-        
+
         $tanggal = $this->request->getPost('tanggal');
         $kelas = $this->request->getPost('kelas');
         $attendanceDataJson = $this->request->getPost('attendance_data');
-        
+
         // Debug logging
         log_message('debug', 'Save All Request - User: ' . $userId . ', Role: ' . $userRole . ', Date: ' . $tanggal . ', Class: ' . $kelas);
         log_message('debug', 'Attendance Data JSON: ' . $attendanceDataJson);
-        
+
         // Validate required fields
         if (empty($tanggal) || empty($kelas)) {
             log_message('debug', 'Save All - Missing required fields. Tanggal: ' . ($tanggal ?: 'empty') . ', Kelas: ' . ($kelas ?: 'empty'));
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Tanggal dan kelas harus diisi'
             ]);
         }
@@ -444,21 +519,21 @@ class Absensi extends BaseController
                 'offDayInfo' => $offDayInfo,
             ]);
         }
-        
+
         if (empty($attendanceDataJson)) {
             log_message('debug', 'Save All - Empty attendance_data JSON');
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Data absensi tidak ditemukan'
             ]);
         }
-        
+
         $attendanceData = json_decode($attendanceDataJson, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             log_message('debug', 'Save All - JSON decode error: ' . json_last_error_msg());
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Data absensi tidak valid - JSON Error: ' . json_last_error_msg()
             ]);
         }
@@ -467,7 +542,7 @@ class Absensi extends BaseController
         if (!$this->absensiModel->canAccessClass($userId, $kelas, $userRole)) {
             log_message('debug', 'Save All - Access denied to class: ' . $kelas);
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Anda tidak memiliki akses ke kelas tersebut'
             ]);
         }
@@ -475,7 +550,7 @@ class Absensi extends BaseController
         if (empty($attendanceData) || !is_array($attendanceData)) {
             log_message('debug', 'Save All - Empty or invalid attendance data array');
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Data absensi tidak valid atau kosong'
             ]);
         }
@@ -492,7 +567,7 @@ class Absensi extends BaseController
                 log_message('debug', 'Save All - Missing siswa_id or status for index: ' . $index);
                 continue;
             }
-            
+
             $data = [
                 'siswa_id' => (int)$attendance['siswa_id'],
                 'tanggal' => $tanggal,
@@ -516,7 +591,7 @@ class Absensi extends BaseController
                     $errors[] = $errorMsg;
                     log_message('debug', 'Save All - Failed to save attendance for student: ' . $attendance['siswa_id'] . ' - Model errors: ' . json_encode($modelErrors));
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $errors[] = 'Exception untuk siswa ID: ' . $attendance['siswa_id'] . ' - ' . $e->getMessage();
                 log_message('debug', 'Save All - Exception for student: ' . $attendance['siswa_id'] . ' - ' . $e->getMessage());
             }
@@ -526,7 +601,7 @@ class Absensi extends BaseController
 
         if ($successCount === $totalCount) {
             return $this->response->setJSON([
-                'success' => true, 
+                'success' => true,
                 'message' => "Semua absensi berhasil disimpan ({$successCount} dari {$totalCount})"
             ]);
         } else {
@@ -538,7 +613,7 @@ class Absensi extends BaseController
                 }
             }
             return $this->response->setJSON([
-                'success' => false, 
+                'success' => false,
                 'message' => $errorMessage,
                 'details' => $errors
             ]);
@@ -552,7 +627,7 @@ class Absensi extends BaseController
     {
         $kelas = $this->request->getGet('kelas');
         $month = $this->request->getGet('month') ?: date('Y-m');
-        
+
         if (!$kelas) {
             return $this->response->setJSON([
                 'success' => false,
@@ -562,15 +637,15 @@ class Absensi extends BaseController
 
         // Get students in the class
         $students = $this->tbSiswaModel->where('kelas', $kelas)->orderBy('nama', 'ASC')->findAll();
-        
+
         // Get number of days in the month
         $year = date('Y', strtotime($month . '-01'));
         $monthNum = date('m', strtotime($month . '-01'));
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $monthNum, $year);
-        
+
         // Prepare attendance data
         $attendanceData = [];
-        
+
         foreach ($students as $student) {
             $studentData = [
                 'nama' => $student['nama'],
@@ -583,16 +658,16 @@ class Absensi extends BaseController
                     'alpha' => 0
                 ]
             ];
-            
+
             // Get attendance for each day of the month
             for ($day = 1; $day <= $daysInMonth; $day++) {
                 $date = sprintf('%s-%02d-%02d', $year, $monthNum, $day);
-                
+
                 $attendance = $this->absensiModel
                     ->where('siswa_id', $student['siswa_id'])
                     ->where('tanggal', $date)
                     ->first();
-                
+
                 if ($attendance) {
                     $status = $attendance['status'];
                     $studentData['days'][$day] = $status;
@@ -602,7 +677,7 @@ class Absensi extends BaseController
                     $dayOfWeek = date('N', strtotime($date));
                     $isWeekday = $dayOfWeek <= 5; // Monday = 1, Friday = 5
                     $isPastDate = strtotime($date) < strtotime(date('Y-m-d'));
-                    
+
                     if ($isWeekday && $isPastDate) {
                         $studentData['days'][$day] = 'alpha';
                         $studentData['summary']['alpha']++;
@@ -611,10 +686,10 @@ class Absensi extends BaseController
                     }
                 }
             }
-            
+
             $attendanceData[] = $studentData;
         }
-        
+
         return $this->response->setJSON([
             'success' => true,
             'data' => [
