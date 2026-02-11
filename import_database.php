@@ -30,6 +30,7 @@ try {
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::MYSQL_ATTR_LOCAL_INFILE => true,
         ]
     );
     echo "Connected successfully!\n\n";
@@ -47,38 +48,61 @@ echo "Reading SQL file...\n";
 $sql = file_get_contents($sqlFile);
 echo "File size: " . number_format(strlen($sql)) . " bytes\n\n";
 
-// Remove database-specific commands that might conflict
+// Disable foreign key checks
+echo "Disabling foreign key checks...\n";
+$pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+$pdo->exec("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO'");
+
+// Remove database-specific commands
 $sql = preg_replace('/^USE\s+`[^`]+`\s*;/mi', '', $sql);
 $sql = preg_replace('/^CREATE DATABASE.*$/mi', '', $sql);
 
-// Split by delimiter (handle both ; and custom delimiters)
-echo "Executing SQL statements...\n";
+// Better SQL statement splitting that handles multi-line INSERTs
+echo "Parsing SQL statements...\n";
 
 $statements = [];
-$currentStatement = '';
-$delimiter = ';';
+$currentStmt = '';
+$inString = false;
+$stringChar = '';
+$escaped = false;
 
-$lines = explode("\n", $sql);
-$totalLines = count($lines);
-
-foreach ($lines as $i => $line) {
-    // Check for delimiter change
-    if (preg_match('/^DELIMITER\s+(\S+)/i', trim($line), $matches)) {
-        $delimiter = $matches[1];
+for ($i = 0; $i < strlen($sql); $i++) {
+    $char = $sql[$i];
+    $currentStmt .= $char;
+    
+    if ($escaped) {
+        $escaped = false;
         continue;
     }
     
-    $currentStatement .= $line . "\n";
+    if ($char === '\\') {
+        $escaped = true;
+        continue;
+    }
     
-    // Check if statement is complete
-    if (str_ends_with(trim($line), $delimiter)) {
-        $stmt = trim($currentStatement);
-        $stmt = rtrim($stmt, $delimiter);
-        
-        if (!empty($stmt) && !preg_match('/^--/', $stmt) && !preg_match('/^\/\*/', $stmt)) {
-            $statements[] = $stmt;
+    if (!$inString && ($char === "'" || $char === '"')) {
+        $inString = true;
+        $stringChar = $char;
+        continue;
+    }
+    
+    if ($inString && $char === $stringChar) {
+        $inString = false;
+        continue;
+    }
+    
+    if (!$inString && $char === ';') {
+        $stmt = trim($currentStmt);
+        if (!empty($stmt) && $stmt !== ';') {
+            // Skip comments-only statements
+            $cleanStmt = preg_replace('/--.*$/m', '', $stmt);
+            $cleanStmt = preg_replace('/\/\*.*?\*\//s', '', $cleanStmt);
+            $cleanStmt = trim($cleanStmt);
+            if (!empty($cleanStmt) && $cleanStmt !== ';') {
+                $statements[] = $stmt;
+            }
         }
-        $currentStatement = '';
+        $currentStmt = '';
     }
 }
 
@@ -90,9 +114,11 @@ $errors = 0;
 $errorMessages = [];
 
 foreach ($statements as $i => $stmt) {
-    // Skip comments and empty statements
+    // Skip SET and comment lines
     $trimmed = trim($stmt);
-    if (empty($trimmed) || strpos($trimmed, '--') === 0 || strpos($trimmed, '/*') === 0) {
+    if (empty($trimmed) || 
+        preg_match('/^\/\*!\d+/', $trimmed) ||
+        preg_match('/^--/', $trimmed)) {
         continue;
     }
     
@@ -100,17 +126,16 @@ foreach ($statements as $i => $stmt) {
         $pdo->exec($stmt);
         $success++;
         
-        // Progress indicator every 100 statements
-        if ($success % 100 === 0) {
-            echo "Progress: $success / $total statements executed\n";
+        // Progress every 50 statements
+        if ($success % 50 === 0) {
+            echo "Progress: $success statements executed\n";
         }
     } catch (PDOException $e) {
         $errors++;
-        $shortStmt = substr($stmt, 0, 100);
-        $errorMessages[] = "Error in statement: $shortStmt... - " . $e->getMessage();
+        $shortStmt = substr(preg_replace('/\s+/', ' ', $stmt), 0, 80);
+        $errorMessages[] = "[$shortStmt...] - " . $e->getMessage();
         
-        // Continue on error (some errors like "table already exists" are OK)
-        if ($errors <= 5) {
+        if ($errors <= 10) {
             echo "Warning: " . $e->getMessage() . "\n";
         }
     }
@@ -119,6 +144,10 @@ foreach ($statements as $i => $stmt) {
 echo "\n========== IMPORT COMPLETE ==========\n";
 echo "Successful: $success\n";
 echo "Errors: $errors\n";
+
+// Re-enable foreign key checks  
+$pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+echo "Foreign key checks re-enabled\n";
 
 if ($errors > 0 && $errors <= 10) {
     echo "\nError details:\n";
