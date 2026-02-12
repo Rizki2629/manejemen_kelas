@@ -409,31 +409,31 @@
 
     <script>
         // Mobile menu toggle
-        const mobileMenuButton = document.getElementById(\'mobile-menu-button\');
-        const mobileMenu = document.getElementById(\'mobile-menu\');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
 
-        mobileMenuButton.addEventListener(\'click\', () => {
-            mobileMenu.classList.toggle(\'hidden\');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
         });
 
         // Smooth scrolling for anchor links
-        document.querySelectorAll(\'a[href^="#"]\').forEach(anchor => {
-            anchor.addEventListener(\'click\', function (e) {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute(\'href\'));
+                const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
                     target.scrollIntoView({
-                        behavior: \'smooth\',
-                        block: \'start\'
+                        behavior: 'smooth',
+                        block: 'start'
                     });
                 }
             });
         });
 
         // Close mobile menu when clicking on a link
-        document.querySelectorAll(\'#mobile-menu a\').forEach(link => {
-            link.addEventListener(\'click\', () => {
-                mobileMenu.classList.add(\'hidden\');
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
             });
         });
     </script>
