@@ -4,9 +4,9 @@
   "description": "CodeIgniter 4 School Management Application",
   "private": true,
   "scripts": {
-    "dev": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --watch",
-    "build": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --minify",
-    "build:prod": "NODE_ENV=production npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --minify"
+    "dev": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/assets/css/tailwind.min.css --watch",
+    "build": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/assets/css/tailwind.min.css --minify",
+    "build:prod": "NODE_ENV=production npx tailwindcss -i ./public/css/tailwind.css -o ./public/assets/css/tailwind.min.css --minify"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.1",

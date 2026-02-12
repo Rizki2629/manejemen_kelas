@@ -6,14 +6,14 @@
     <title><?= $this->renderSection('title') ?></title>
     
     <!-- Preload critical CSS -->
-    <link rel="preload" href="<?= base_url('css/tailwind.min.css') ?>" as="style">
+    <link rel="preload" href="<?= base_url('assets/css/tailwind.min.css') ?>" as="style">
     
     <!-- DNS Prefetch for external resources -->
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     
     <!-- Tailwind CSS - Compiled Production Build -->
-    <link rel="stylesheet" href="<?= base_url('css/tailwind.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/tailwind.min.css') ?>">
     
     <!-- Font Awesome - with display swap for better performance -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
