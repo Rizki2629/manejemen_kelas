@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
     <!-- Tailwind CSS - Compiled Production Build -->
-    <link rel="stylesheet" href="<?= base_url('css/tailwind.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/tailwind.min.css') ?>">
     <?php // Precompute section flags early so x-data can use them
         $isKaihSection = strpos(current_url(), 'habits') !== false; 
         $isKaihMonthly = strpos(current_url(), 'monthly-report') !== false; 
