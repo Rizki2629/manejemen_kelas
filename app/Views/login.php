@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Login</title>
+    <title>Login - SDN Grogol Utara 09</title>
     
     <!-- DNS Prefetch -->
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -26,10 +26,10 @@
             <div class="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <i class="fas fa-graduation-cap text-blue-600 text-2xl sm:text-3xl"></i>
             </div>
-            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-blue-700 tracking-wide">
-                Login
+            <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-blue-700 tracking-wide leading-tight">
+                SISTEM ADMINISTRASI KELAS
             </h1>
-            <p class="text-gray-600 text-sm sm:text-base mt-2">Masuk ke sistem SDN Grogol Utara 09</p>
+            <p class="text-blue-600 font-semibold text-sm sm:text-base mt-1">SDN GROGOL UTARA 09</p>
         </div>
 
         <!-- Error Messages -->
@@ -58,15 +58,15 @@
             <!-- Username Field -->
             <div>
                 <label for="username" class="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
-                    <i class="fas fa-user mr-2 text-blue-600"></i>Username atau Email
+                    <i class="fas fa-user mr-2 text-blue-600"></i>Username
                 </label>
                 <input 
                     type="text" 
                     name="username" 
                     id="username" 
-                    value="<?= set_value('username') ?>" 
+                    value="<?= set_value('username', $rememberedUsername ?? '') ?>" 
                     required
-                    placeholder="Masukkan username atau email"
+                    placeholder="Masukkan username"
                     class="w-full h-12 sm:h-14 px-4 sm:px-6 text-sm sm:text-base rounded-xl border-2 border-gray-300 bg-white text-gray-900 placeholder-gray-500 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-300 hover:border-gray-400" 
                 />
             </div>
@@ -90,16 +90,15 @@
                         id="togglePassword" 
                         aria-label="Toggle password visibility"
                         class="absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4 text-gray-400 hover:text-blue-600 focus:outline-none transition-colors duration-200">
-                        <i id="eyeIcon" class="fas fa-eye text-lg"></i>
-                        <i id="eyeOffIcon" class="fas fa-eye-slash text-lg hidden"></i>
+                        <i id="eyeIcon" class="fas fa-eye-slash text-lg"></i>
                     </button>
                 </div>
             </div>
 
             <!-- Remember Me & Forgot Password -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-                <label class="flex items-center">
-                    <input type="checkbox" name="remember" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" name="remember" value="1" <?= !empty($rememberedUsername ?? '') ? 'checked' : '' ?> class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
                     <i class="fas fa-user-check ml-2 mr-1 text-blue-600 text-sm"></i>
                     <span class="text-sm text-gray-600">Ingat saya</span>
                 </label>
@@ -126,13 +125,12 @@
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
         const eyeIcon = document.getElementById('eyeIcon');
-        const eyeOffIcon = document.getElementById('eyeOffIcon');
 
         togglePassword.addEventListener('click', function () {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            eyeIcon.classList.toggle('hidden');
-            eyeOffIcon.classList.toggle('hidden');
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            eyeIcon.classList.toggle('fa-eye-slash', isPassword);
+            eyeIcon.classList.toggle('fa-eye', !isPassword);
         });
 
         // Add loading state to form submission
