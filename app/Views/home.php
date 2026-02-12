@@ -4,20 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SDN GrogoL Utara 09</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#0052cc',
-                        secondary: '#00b894',
-                    }
-                }
-            }
-        }
-    </script>
+    <style>
+        /* Custom colors to replace tailwind.config */
+        .text-primary { color: #0052cc !important; }
+        .bg-primary { background-color: #0052cc !important; }
+        .text-secondary { color: #00b894 !important; }
+        .bg-secondary { background-color: #00b894 !important; }
+        .border-primary { border-color: #0052cc !important; }
+        .border-secondary { border-color: #00b894 !important; }
+        .hover\:bg-primary:hover { background-color: #0052cc !important; }
+        .hover\:text-primary:hover { color: #0052cc !important; }
+    </style>
     <style>
         .hero-gradient {
             background: linear-gradient(90deg, #0052cc 0%, #00b894 100%);

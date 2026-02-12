@@ -53,7 +53,7 @@ $offDayKet = is_array($offDayInfo) ? ($offDayInfo['keterangan'] ?? '') : '';
                             </small>
                             <?php if ($selectedKelas): ?>
                                 <span class="ml-2 px-2 py-1 bg-white/20 text-white text-xs font-medium rounded-full flex-shrink-0">
-                                    Kelas <?= $selectedKelas ?>
+                                    <?= $selectedKelas ?>
                                 </span>
                             <?php endif; ?>
                         </div>
@@ -66,7 +66,7 @@ $offDayKet = is_array($offDayInfo) ? ($offDayInfo['keterangan'] ?? '') : '';
                                 <i class="fas fa-clipboard-list mr-3"></i>
                                 Input Absensi
                                 <?php if ($selectedKelas): ?>
-                                    <span class="ml-3 px-3 py-1 bg-white/20 text-white text-sm font-medium rounded-full">Kelas <?= $selectedKelas ?></span>
+                                    <span class="ml-3 px-3 py-1 bg-white/20 text-white text-sm font-medium rounded-full"><?= $selectedKelas ?></span>
                                 <?php endif; ?>
                             </h4>
                             <small class="text-white/90 flex items-center mt-2">
@@ -315,7 +315,7 @@ $offDayKet = is_array($offDayInfo) ? ($offDayInfo['keterangan'] ?? '') : '';
                 <div class="text-center py-12">
                     <i class="fas fa-user-slash text-6xl text-gray-400 mb-4"></i>
                     <h5 class="text-xl font-bold text-gray-700 mb-2">Tidak Ada Siswa</h5>
-                    <p class="text-gray-500">Kelas <?= $selectedKelas ?> belum memiliki siswa yang terdaftar.</p>
+                    <p class="text-gray-500"><?= $selectedKelas ?> belum memiliki siswa yang terdaftar.</p>
                 </div>
             </div>
 
@@ -2116,7 +2116,16 @@ function saveAllAttendance() {
             attendanceData = {}; // Clear data
             updateUnsavedCount();
         } else {
-            showNotification('Gagal menyimpan data: ' + (data.message || 'Unknown error'), 'error');
+            let msg = 'Gagal menyimpan data: ' + (data.message || 'Unknown error');
+            if (Array.isArray(data.details) && data.details.length > 0) {
+                const topDetails = data.details.slice(0, 3);
+                console.error('Save_all details:', data.details);
+                msg += '<br><small>' + topDetails.join('<br>') + '</small>';
+                if (data.details.length > 3) {
+                    msg += '<br><small>...dan ' + (data.details.length - 3) + ' error lainnya</small>';
+                }
+            }
+            showNotification(msg, 'error');
         }
     })
     .catch(error => {

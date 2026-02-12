@@ -48,6 +48,20 @@ class AbsensiModel extends Model
     ];
 
     /**
+     * Holds last DB-level error for diagnostics when insert/update fails
+     * without triggering validation errors.
+     */
+    protected $lastDbError = null;
+
+    /**
+     * Get last DB-level error (string or array) from the most recent save attempt.
+     */
+    public function getLastDbError()
+    {
+        return $this->lastDbError;
+    }
+
+    /**
      * Get attendance by class and date
      */
     public function getAttendanceByClassAndDate($kelasId, $tanggal)
@@ -99,6 +113,9 @@ class AbsensiModel extends Model
     {
         log_message('debug', 'AbsensiModel::saveAttendance - Input data: ' . json_encode($data));
 
+        // Reset last DB error each call
+        $this->lastDbError = null;
+
         // Validate data first
         if (!$this->validate($data)) {
             $errors = $this->errors();
@@ -128,7 +145,12 @@ class AbsensiModel extends Model
 
                 if (!$result) {
                     $errors = $this->errors();
+                    $dbError = $this->db ? $this->db->error() : null;
+                    $this->lastDbError = $dbError ?: $errors;
                     log_message('debug', 'AbsensiModel::saveAttendance - Update errors: ' . json_encode($errors));
+                    if ($dbError) {
+                        log_message('error', 'AbsensiModel::saveAttendance - Update DB error: ' . json_encode($dbError));
+                    }
                 }
 
                 return $result;
@@ -140,12 +162,74 @@ class AbsensiModel extends Model
 
                 if (!$result) {
                     $errors = $this->errors();
+                    $dbError = $this->db ? $this->db->error() : null;
+                    $this->lastDbError = $dbError ?: $errors;
                     log_message('debug', 'AbsensiModel::saveAttendance - Insert errors: ' . json_encode($errors));
+                    if ($dbError) {
+                        log_message('error', 'AbsensiModel::saveAttendance - Insert DB error: ' . json_encode($dbError));
+                    }
+
+                    // Common on some Postgres imports: sequence for absensi.id is behind existing max(id)
+                    $dbErrorText = is_array($dbError) ? json_encode($dbError) : (string)($dbError ?? '');
+                    $driver = '';
+                    try {
+                        $driver = (string)($this->db->DBDriver ?? '');
+                    } catch (\Throwable $e) {
+                        $driver = '';
+                    }
+
+                    $isPostgres = stripos($driver, 'postgre') !== false;
+                    $isDuplicatePkey = stripos($dbErrorText, 'absensi_pkey') !== false || stripos($dbErrorText, 'duplicate key value violates unique constraint') !== false;
+
+                    if ($isPostgres && $isDuplicatePkey) {
+                        try {
+                            $this->db->query("SELECT setval(pg_get_serial_sequence('absensi','id'), COALESCE((SELECT MAX(id) FROM absensi), 0), true)");
+                            $resultRetry = $this->insert($data);
+                            if ($resultRetry) {
+                                log_message('debug', 'AbsensiModel::saveAttendance - Insert retry success after sequence sync');
+                                $this->lastDbError = null;
+                                return $resultRetry;
+                            }
+                            $dbErrorRetry = $this->db ? $this->db->error() : null;
+                            $this->lastDbError = $dbErrorRetry ?: ($this->errors() ?: $this->lastDbError);
+                            log_message('error', 'AbsensiModel::saveAttendance - Insert retry failed after sequence sync: ' . json_encode($this->lastDbError));
+                        } catch (\Throwable $e2) {
+                            $this->lastDbError = $e2->getMessage();
+                            log_message('error', 'AbsensiModel::saveAttendance - Sequence sync failed: ' . $e2->getMessage());
+                        }
+                    }
                 }
 
                 return $result;
             }
         } catch (\Exception $e) {
+            // Retry once on Postgres PK duplicate due to sequence mismatch
+            $msg = $e->getMessage() ?? '';
+            $driver = '';
+            try {
+                $driver = (string)($this->db->DBDriver ?? '');
+            } catch (\Throwable $eDriver) {
+                $driver = '';
+            }
+            $isPostgres = stripos($driver, 'postgre') !== false;
+            $isDuplicatePkey = stripos($msg, 'absensi_pkey') !== false || stripos($msg, 'duplicate key value violates unique constraint') !== false;
+            if ($isPostgres && $isDuplicatePkey) {
+                try {
+                    $this->db->query("SELECT setval(pg_get_serial_sequence('absensi','id'), COALESCE((SELECT MAX(id) FROM absensi), 0), true)");
+                    $resultRetry = $this->insert($data);
+                    if ($resultRetry) {
+                        log_message('debug', 'AbsensiModel::saveAttendance - Insert retry success after exception & sequence sync');
+                        $this->lastDbError = null;
+                        return $resultRetry;
+                    }
+                } catch (\Throwable $e2) {
+                    // fall through to normal error handling
+                    $this->lastDbError = $e2->getMessage();
+                    log_message('error', 'AbsensiModel::saveAttendance - Retry after exception failed: ' . $e2->getMessage());
+                }
+            }
+
+            $this->lastDbError = $e->getMessage();
             log_message('error', 'AbsensiModel::saveAttendance - Exception: ' . $e->getMessage());
             return false;
         }
@@ -222,7 +306,7 @@ class AbsensiModel extends Model
     }
 
     /**
-     * Check if user can access class attendance
+     * Check if user can access class attendance (cached for 10 minutes)
      */
     public function canAccessClass($userId, $kelasId, $userRole)
     {
@@ -233,6 +317,14 @@ class AbsensiModel extends Model
 
         // Wali kelas can only access their own class
         if ($userRole === 'wali_kelas' || $userRole === 'walikelas') {
+            $cache = \Config\Services::cache();
+            $cacheKey = 'can_access_class_' . $userId . '_' . md5($kelasId);
+            
+            $canAccess = $cache->get($cacheKey);
+            if ($canAccess !== null) {
+                return $canAccess;
+            }
+            
             $db = \Config\Database::connect();
             $query = $db->query("
                 SELECT COUNT(*) as count 
@@ -242,7 +334,10 @@ class AbsensiModel extends Model
             ", [$userId, $kelasId]);
 
             $result = $query->getRowArray();
-            return $result['count'] > 0;
+            $canAccess = $result['count'] > 0;
+            
+            $cache->save($cacheKey, $canAccess, 600); // Cache for 10 minutes
+            return $canAccess;
         }
 
         return false;
@@ -576,10 +671,18 @@ class AbsensiModel extends Model
     }
 
     /**
-     * Get holiday details for a specific date
+     * Get holiday details for a specific date (cached for 1 hour)
      */
     public function getHolidayDetails($date)
     {
+        $cache = \Config\Services::cache();
+        $cacheKey = 'holiday_details_' . $date;
+        
+        $result = $cache->get($cacheKey);
+        if ($result !== null) {
+            return $result === 'null' ? null : $result;
+        }
+        
         $db = \Config\Database::connect();
 
         $query = "
@@ -590,21 +693,25 @@ class AbsensiModel extends Model
             LIMIT 1
         ";
 
-        $result = $db->query($query, [$date])->getRowArray();
+        $holidayResult = $db->query($query, [$date])->getRowArray();
 
-        if ($result) {
-            return $result;
+        if ($holidayResult) {
+            $cache->save($cacheKey, $holidayResult, 3600); // Cache for 1 hour
+            return $holidayResult;
         }
 
         // Check if it's weekend
         $dayOfWeek = date('w', strtotime($date));
         if ($dayOfWeek == 0 || $dayOfWeek == 6) {
-            return [
+            $weekendResult = [
                 'status' => 'weekend',
                 'keterangan' => $dayOfWeek == 0 ? 'Hari Minggu' : 'Hari Sabtu'
             ];
+            $cache->save($cacheKey, $weekendResult, 3600);
+            return $weekendResult;
         }
 
+        $cache->save($cacheKey, 'null', 3600); // Cache null result too
         return null;
     }
 }

@@ -86,16 +86,26 @@ class TbSiswaModel extends Model
     protected $deletedField = 'deleted_at';
 
     /**
-     * Get all active classes
+     * Get all active classes (cached for 5 minutes)
      */
     public function getActiveClasses()
     {
-        return $this->select('kelas')
-                    ->where('kelas !=', 'Lulus')
-                    ->where('deleted_at IS NULL')
-                    ->groupBy('kelas')
-                    ->orderBy('kelas', 'ASC')
-                    ->findAll();
+        $cache = \Config\Services::cache();
+        $cacheKey = 'active_classes_list';
+        
+        $classes = $cache->get($cacheKey);
+        if ($classes === null) {
+            $classes = $this->select('kelas')
+                        ->where('kelas !=', 'Lulus')
+                        ->where('deleted_at IS NULL')
+                        ->groupBy('kelas')
+                        ->orderBy('kelas', 'ASC')
+                        ->findAll();
+            
+            $cache->save($cacheKey, $classes, 300); // Cache for 5 minutes
+        }
+        
+        return $classes;
     }
 
     /**

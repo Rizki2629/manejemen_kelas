@@ -1,0 +1,16 @@
+{
+  "name": "manejemen_kelas",
+  "version": "1.0.0",
+  "description": "CodeIgniter 4 School Management Application",
+  "private": true,
+  "scripts": {
+    "dev": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --watch",
+    "build": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --minify",
+    "build:prod": "NODE_ENV=production npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33"
+  }
+}
