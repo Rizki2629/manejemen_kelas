@@ -8,13 +8,27 @@ class Login extends BaseController
 {
     public function index()
     {
-        helper(['form']);
-        return view('login');
+        helper(['form', 'cookie']);
+        
+        // If already logged in, redirect
+        if (session()->get('logged_in')) {
+            $role = session()->get('role');
+            if ($role === 'siswa') return redirect()->to('/siswa');
+            if ($role === 'admin') return redirect()->to('/admin/dashboard');
+            return redirect()->to('/dashboard');
+        }
+        
+        // Get remembered username from cookie
+        $rememberedUsername = get_cookie('remember_username');
+        
+        return view('login', [
+            'rememberedUsername' => $rememberedUsername ?? ''
+        ]);
     }
 
     public function authenticate()
     {
-        helper(['form']);
+        helper(['form', 'cookie']);
         $session = session();
 
         $rules = [
@@ -33,6 +47,9 @@ class Login extends BaseController
 
         // Fallback authentication when database is not available
         if ($username === 'admin' && $password === '123456') {
+            // Handle remember me
+            $this->handleRememberMe($username);
+            
             $session->set([
                 'user_id' => 1,
                 'username' => 'admin',
@@ -52,6 +69,9 @@ class Login extends BaseController
             $user = $model->authenticate($username, $password);
 
             if ($user) {
+                // Handle remember me
+                $this->handleRememberMe($username);
+                
                 // Update last login
                 $model->update($user['id'], ['last_login' => date('Y-m-d H:i:s')]);
                 
@@ -133,12 +153,35 @@ class Login extends BaseController
 
     public function logout()
     {
+        helper(['cookie']);
         $session = session();
+        
+        // Clear remember me cookie
+        delete_cookie('remember_username');
         
         // Destroy all session data
         $session->destroy();
         
         // Redirect to login page with success message
         return redirect()->to('/login')->with('success', 'Anda berhasil logout');
+    }
+    
+    /**
+     * Handle Remember Me functionality
+     */
+    private function handleRememberMe(string $username): void
+    {
+        $remember = $this->request->getVar('remember');
+        
+        if ($remember) {
+            // Set cookie for 30 days
+            set_cookie('remember_username', $username, 30 * 24 * 60 * 60, '', '/', '', false, true);
+            
+            // Extend session expiration to 30 days
+            ini_set('session.gc_maxlifetime', 30 * 24 * 60 * 60);
+            session_set_cookie_params(30 * 24 * 60 * 60);
+        } else {
+            delete_cookie('remember_username');
+        }
     }
 }
