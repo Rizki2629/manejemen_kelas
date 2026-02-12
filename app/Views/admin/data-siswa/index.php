@@ -7,17 +7,7 @@
         <div>
             <h1 class="text-3xl font-bold text-gray-900 mb-3 pl-2">
                 Data Siswa
-                <?php if (isset($userRole) && $userRole === 'walikelas' && isset($userWalikelasData) && !empty($userWalikelasData['kelas'])): ?>
-                    <span class="text-lg font-normal text-blue-600">- Kelas <?= esc($userWalikelasData['kelas']) ?></span>
-                <?php endif; ?>
             </h1>
-            <p class="text-gray-600 pl-2">
-                <?php if (isset($userRole) && $userRole === 'walikelas'): ?>
-                    Kelola data siswa kelas yang Anda wali
-                <?php else: ?>
-                    Kelola data siswa sekolah
-                <?php endif; ?>
-            </p>
         </div>
         <div class="flex space-x-3">
             <!-- Tambah Data Siswa Button - Only for Admin -->
@@ -37,7 +27,7 @@
                 <span>
                     Export CSV
                     <?php if (isset($userRole) && $userRole === 'walikelas' && isset($userWalikelasData) && !empty($userWalikelasData['kelas'])): ?>
-                        (Kelas <?= esc($userWalikelasData['kelas']) ?>)
+                        (<?= esc($userWalikelasData['kelas']) ?>)
                     <?php endif; ?>
                 </span>
             </a>
@@ -48,7 +38,7 @@
                 <span>
                     Export Excel
                     <?php if (isset($userRole) && $userRole === 'walikelas' && isset($userWalikelasData) && !empty($userWalikelasData['kelas'])): ?>
-                        (Kelas <?= esc($userWalikelasData['kelas']) ?>)
+                        (<?= esc($userWalikelasData['kelas']) ?>)
                     <?php endif; ?>
                 </span>
             </button>
@@ -99,9 +89,9 @@
 
 <!-- Filter and Search -->
 <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 mb-8 pl-2">
-    <form method="GET" class="grid grid-cols-1 md:grid-cols-<?= (isset($userRole) && $userRole === 'walikelas') ? '3' : '4' ?> gap-4">
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-<?= (isset($userRole) && $userRole === 'walikelas') ? '4' : '5' ?> gap-4 items-end">
         <!-- Search -->
-        <div class="md:col-span-2">
+        <div class="md:col-span-1">
             <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Cari Siswa</label>
             <div class="relative">
                 <input type="text" id="search" name="search" value="<?= esc($search) ?>"
@@ -143,33 +133,22 @@
             </select>
         </div>
 
-        <div class="md:col-span-<?= (isset($userRole) && $userRole === 'walikelas') ? '3' : '4' ?> flex space-x-3">
-            <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+        <!-- Filter & Reset Buttons -->
+        <div class="flex space-x-3">
+            <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
                 Filter
             </button>
-            <a href="/admin/data-siswa" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-8 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
+            <a href="/admin/data-siswa" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center">
                 Reset
             </a>
         </div>
+
     </form>
 </div>
 
 <!-- Table -->
 <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden pl-2">
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-900">
-            Daftar Siswa
-            <?php if (isset($userRole) && $userRole === 'walikelas' && isset($userWalikelasData) && !empty($userWalikelasData['kelas'])): ?>
-                <span class="text-blue-600 font-normal">Kelas <?= esc($userWalikelasData['kelas']) ?></span>
-            <?php endif; ?>
-            <?php if (!empty($search) || (!empty($selectedKelas) && (!isset($userRole) || $userRole !== 'walikelas')) || !empty($selectedJk)): ?>
-                <span class="text-gray-500 font-normal">(Hasil Filter)</span>
-            <?php endif; ?>
-        </h3>
-        <?php if (isset($userRole) && $userRole === 'walikelas'): ?>
-            <p class="text-sm text-gray-500 mt-1">Anda hanya dapat melihat data siswa dari kelas yang Anda wali</p>
-        <?php endif; ?>
-    </div>
+
 
     <?php // Top pagination for easier access 
     ?>
