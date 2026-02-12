@@ -5,18 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $this->renderSection('title') ?> - Sistem Manajemen Kelas</title>
     
-        <!-- Tailwind CSS - Compiled Production Build -->
-        <link rel="stylesheet" href="/css/tailwind.min.css"></script>
-        <?php // Precompute section flags early so x-data can use them
-            $isKaihSection = strpos(current_url(), 'habits') !== false; 
-            $isKaihMonthly = strpos(current_url(), 'monthly-report') !== false; 
-        ?>
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Tailwind CSS - Compiled Production Build -->
+    <link rel="stylesheet" href="<?= base_url('css/tailwind.min.css') ?>">
+    <?php // Precompute section flags early so x-data can use them
+        $isKaihSection = strpos(current_url(), 'habits') !== false; 
+        $isKaihMonthly = strpos(current_url(), 'monthly-report') !== false; 
+    ?>
     
     <!-- Fonts & Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
     <!-- Roboto font for cleaner reading experience -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom Enhancements -->
