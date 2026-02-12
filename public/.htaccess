@@ -67,8 +67,8 @@
     
     # Remove ETags (unnecessary with expires)
     Header unset ETag
+    FileETag None
 </IfModule>
-FileETag None
 
 # ============================================
 # URL REWRITING
