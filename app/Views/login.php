@@ -4,8 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Login</title>
+    
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    
+    <!-- Preload critical CSS -->
+    <link rel="preload" href="/css/tailwind.min.css" as="style">
+    
+    <!-- Tailwind CSS -->
     <link rel="stylesheet" href="/css/tailwind.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Font Awesome - lazy loaded -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 </head>
 <body class="h-full flex items-center justify-center font-sans bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
     <div class="w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl bg-white p-6 sm:p-8 lg:p-12 rounded-2xl shadow-2xl border border-gray-200">
