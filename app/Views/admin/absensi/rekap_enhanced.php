@@ -2,8 +2,7 @@
 
 <?= $this->section('content') ?>
 
-<!-- Tailwind CSS CDN with latest version -->
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Font Awesome for icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <style>

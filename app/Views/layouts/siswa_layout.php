@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $this->renderSection('title') ?> - Sistem Manajemen Kelas</title>
     
-        <!-- Tailwind CSS (CDN) -->
-        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Tailwind CSS - Compiled Production Build -->
+        <link rel="stylesheet" href="/css/tailwind.min.css"></script>
         <?php // Precompute section flags early so x-data can use them
             $isKaihSection = strpos(current_url(), 'habits') !== false; 
             $isKaihMonthly = strpos(current_url(), 'monthly-report') !== false; 

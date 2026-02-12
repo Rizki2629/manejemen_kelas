@@ -584,12 +584,21 @@ class Absensi extends BaseController
                     log_message('debug', 'Save All - Successfully saved for student: ' . $attendance['siswa_id']);
                 } else {
                     $modelErrors = $this->absensiModel->errors();
+                    $dbError = method_exists($this->absensiModel, 'getLastDbError') ? $this->absensiModel->getLastDbError() : null;
+
                     $errorMsg = 'Gagal menyimpan data siswa ID: ' . $attendance['siswa_id'];
                     if (!empty($modelErrors)) {
-                        $errorMsg .= ' - Errors: ' . json_encode($modelErrors);
+                        $errorMsg .= ' - Validation: ' . json_encode($modelErrors);
+                    } elseif (!empty($dbError)) {
+                        // Keep it short for UI; full details are still in logs
+                        $dbErrorText = is_array($dbError) ? json_encode($dbError) : (string)$dbError;
+                        if (strlen($dbErrorText) > 180) {
+                            $dbErrorText = substr($dbErrorText, 0, 180) . '...';
+                        }
+                        $errorMsg .= ' - DB: ' . $dbErrorText;
                     }
                     $errors[] = $errorMsg;
-                    log_message('debug', 'Save All - Failed to save attendance for student: ' . $attendance['siswa_id'] . ' - Model errors: ' . json_encode($modelErrors));
+                    log_message('debug', 'Save All - Failed to save attendance for student: ' . $attendance['siswa_id'] . ' - Model errors: ' . json_encode($modelErrors) . ' - DB error: ' . json_encode($dbError));
                 }
             } catch (\Exception $e) {
                 $errors[] = 'Exception untuk siswa ID: ' . $attendance['siswa_id'] . ' - ' . $e->getMessage();

@@ -11,8 +11,7 @@ $stats = AttendanceHelper::calculateStats($attendanceData ?? []);
 $legend = AttendanceHelper::getLegendData();
 ?>
 
-<!-- Tailwind CSS CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- Font Awesome for icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <style>
