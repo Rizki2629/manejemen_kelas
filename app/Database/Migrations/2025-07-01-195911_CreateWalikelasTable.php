@@ -22,7 +22,6 @@ class CreateWalikelasTable extends Migration
             'nip' => [
                 'type' => 'VARCHAR',
                 'constraint' => 20,
-                'unique' => true,
             ],
             'kelas' => [
                 'type' => 'VARCHAR',
