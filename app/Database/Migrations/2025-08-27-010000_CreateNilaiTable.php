@@ -3,7 +3,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateNilaiTable extends Migration
+class CreateNilaiTableV2 extends Migration
 {
     public function up()
     {
