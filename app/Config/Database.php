@@ -95,7 +95,7 @@ class Database extends Config
     {
         parent::__construct();
 
-        // Parse JAWSDB_URL for Heroku deployment
+        // Parse JAWSDB_URL for Heroku MySQL add-on
         $jawsdbUrl = getenv('JAWSDB_URL');
         if ($jawsdbUrl) {
             $dbparts = parse_url($jawsdbUrl);
@@ -109,11 +109,40 @@ class Database extends Config
             $this->default['DBCollat'] = 'utf8mb4_general_ci';
         }
 
+        // Parse DATABASE_URL (PostgreSQL style: postgres://user:pass@host:port/db)
+        $databaseUrl = getenv('DATABASE_URL');
+        if ($databaseUrl && !$jawsdbUrl) {
+            $dbparts = parse_url($databaseUrl);
+            $this->default['hostname'] = $dbparts['host'] ?? 'localhost';
+            $this->default['username'] = $dbparts['user'] ?? '';
+            $this->default['password'] = $dbparts['pass'] ?? '';
+            $this->default['database'] = ltrim($dbparts['path'] ?? '', '/');
+            $this->default['port']     = $dbparts['port'] ?? 5432;
+            $this->default['DBDriver'] = 'Postgre';
+            $this->default['pConnect'] = false;
+        }
+
+        // DB_* env vars untuk Railway PostgreSQL via Heroku config:set
+        // (gunakan ini jika tidak memakai JAWSDB_URL atau DATABASE_URL)
+        if (!$jawsdbUrl && !$databaseUrl) {
+            $dbHostname = getenv('DB_HOSTNAME');
+            if ($dbHostname) {
+                $this->default['hostname'] = $dbHostname;
+                $this->default['port']     = (int)(getenv('DB_PORT') ?: 5432);
+                $this->default['database'] = getenv('DB_DATABASE') ?: $this->default['database'];
+                $this->default['username'] = getenv('DB_USERNAME') ?: $this->default['username'];
+                $this->default['password'] = getenv('DB_PASSWORD') ?: $this->default['password'];
+                $this->default['DBDriver'] = getenv('DB_DRIVER')   ?: 'Postgre';
+                $this->default['pConnect'] = false;
+            }
+        }
+
         // If we are using PostgreSQL, ensure the charset is compatible.
         // CI4 will run SET client_encoding based on this value.
-        if (($this->default['DBDriver'] ?? null) === 'Postgre' || ($this->default['DBDriver'] ?? null) === 'PostgreSQL') {
+        if (in_array($this->default['DBDriver'] ?? null, ['Postgre', 'PostgreSQL'], true)) {
             $this->default['charset']  = 'utf8';
             $this->default['DBCollat'] = '';
+            $this->default['pConnect'] = false;
         }
     }
 }
