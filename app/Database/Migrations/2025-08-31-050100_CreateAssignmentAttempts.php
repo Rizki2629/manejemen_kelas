@@ -23,7 +23,11 @@ class CreateAssignmentAttempts extends Migration
             $this->forge->addKey('id', true);
             $this->forge->addKey(['assignment_id','user_id']);
             $this->forge->createTable('classroom_assignment_attempts', true);
-            $this->db->query('CREATE INDEX IF NOT EXISTS idx_attempts_status ON classroom_assignment_attempts (status)');
+            // MySQL 5.7 compat: no IF NOT EXISTS for CREATE INDEX
+            $idxExists = $this->db->query("SHOW INDEX FROM classroom_assignment_attempts WHERE Key_name = 'idx_attempts_status'");
+            if ($idxExists->getResultArray() === []) {
+                $this->db->query('ALTER TABLE classroom_assignment_attempts ADD INDEX idx_attempts_status (status)');
+            }
         }
     }
 

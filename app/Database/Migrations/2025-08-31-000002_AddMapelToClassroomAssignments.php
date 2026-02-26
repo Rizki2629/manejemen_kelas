@@ -17,8 +17,11 @@ class AddMapelToClassroomAssignments extends Migration
                     'after'      => 'kelas'
                 ],
             ]);
-            // Optional composite index for filtering by kelas+mapel
-            $this->db->query("CREATE INDEX IF NOT EXISTS idx_assignments_kelas_mapel ON classroom_assignments (kelas, mapel)");
+            // Optional composite index for filtering by kelas+mapel (MySQL 5.7 compat)
+            $idxExists = $this->db->query("SHOW INDEX FROM classroom_assignments WHERE Key_name = 'idx_assignments_kelas_mapel'");
+            if ($idxExists->getResultArray() === []) {
+                $this->db->query('ALTER TABLE classroom_assignments ADD INDEX idx_assignments_kelas_mapel (kelas, mapel)');
+            }
         }
     }
 
