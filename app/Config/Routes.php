@@ -225,35 +225,26 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('absensi/save', 'Admin\Absensi::save');
     $routes->post('absensi/save_all', 'Admin\Absensi::save_all');
 
-    // Nilai Siswa - disable for walikelas -> show under development
-    // Allow PTS & PAS specifically
+    // Nilai Siswa - full access for walikelas
+    $routes->get('nilai', 'Admin\Nilai::index');
+    $routes->get('nilai/data-tp', 'Admin\Nilai::dataTP');
+    $routes->get('nilai/input/(:segment)/(:segment)', 'Admin\Nilai::inputNilai/$1/$2');
+    $routes->get('nilai/input', 'Admin\Nilai::inputNilai');
+    $routes->get('nilai/cetak', 'Admin\Nilai::cetakNilai');
+    $routes->get('nilai/export-excel', 'Admin\Nilai::exportExcel');
+    $routes->post('nilai/store-bulk-harian', 'Admin\Nilai::storeBulkHarian');
+    $routes->post('nilai/update-bulk-harian', 'Admin\Nilai::updateBulkHarian');
+    $routes->get('nilai/next-kode-harian', 'Admin\Nilai::nextKodeHarian');
+    $routes->get('nilai/used-kode-harian', 'Admin\Nilai::usedKodeHarian');
+    $routes->post('nilai/delete-harian', 'Admin\Nilai::deleteHarianAssessment');
     $routes->get('nilai/pts', 'Admin\Nilai::pts');
     $routes->get('nilai/pas', 'Admin\Nilai::pas');
     $routes->post('nilai/store-bulk-exam', 'Admin\Nilai::storeBulkExam');
-    $routes->get('nilai-siswa', function () {
-        return view('admin/under_development');
-    });
-    $routes->get('nilai', function () {
-        return view('admin/under_development');
-    });
-    $routes->get('nilai/input', function () {
-        return view('admin/under_development');
-    });
-    $routes->get('nilai/create', function () {
-        return view('admin/under_development');
-    });
-    $routes->post('nilai/store', function () {
-        return view('admin/under_development');
-    });
-    $routes->get('nilai/detail/(:num)', function () {
-        return view('admin/under_development');
-    });
-    $routes->get('nilai/edit/(:num)', function () {
-        return view('admin/under_development');
-    });
-    $routes->post('nilai/update/(:num)', function () {
-        return view('admin/under_development');
-    });
+    $routes->get('nilai/create', 'Admin\Nilai::create');
+    $routes->post('nilai/store', 'Admin\Nilai::store');
+    $routes->get('nilai/detail/(:num)', 'Admin\Nilai::detail/$1');
+    $routes->get('nilai/edit/(:num)', 'Admin\Nilai::edit/$1');
+    $routes->post('nilai/update/(:num)', 'Admin\Nilai::update/$1');
 
     // Buku Kasus - disable for walikelas -> show under development
     $routes->get('buku-kasus', function () {
