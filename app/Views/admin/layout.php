@@ -964,7 +964,7 @@
 
                         <!-- Nilai Siswa / Data Nilai Murid -->
                         <?php $userRole = session()->get('role'); ?>
-                        <?php if ($userRole !== 'walikelas' && $userRole !== 'siswa'): ?>
+                        <?php if ($userRole !== 'siswa'): ?>
                             <li class="menu-item-with-submenu">
                                 <div class="group flex items-center space-x-3 py-3 px-4 rounded-xl <?= strpos(uri_string(), 'nilai') !== false ? 'bg-white/20 text-white shadow-xl border border-white/30' : 'text-white/85 hover:bg-white/15 hover:text-white hover:shadow-lg' ?> transition-all duration-300 cursor-pointer submenu-toggle">
                                     <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
