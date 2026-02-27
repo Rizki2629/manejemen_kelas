@@ -59,6 +59,21 @@ debug.log
 *.db
 backup/
 
+# Sensitive data files - NEVER commit
+data-guru.json
+public/migration_data.json
+public/run-migration.php
+import_database.php
+reset_database.php
+migrate_direct.php
+switch_environment.php
+describe_habits.php
+setup_hosting_database.php
+users_for_railway.sql
+tmp_*.php
+*_migration*.json
+*_migration*.php
+
 # Deployment files
 ci4_infinityfree_deployment.zip
 deployment/*.zip
