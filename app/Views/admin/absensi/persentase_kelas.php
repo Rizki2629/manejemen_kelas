@@ -82,6 +82,12 @@
                     @click="tab = 'grafik'; $nextTick(() => window.initAttendanceChart && window.initAttendanceChart());">
                     <i class="fas fa-chart-column mr-2"></i>Grafik
                 </button>
+                <button type="button"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold"
+                    :class="tab === 'per_siswa' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                    @click="tab = 'per_siswa'">
+                    <i class="fas fa-users mr-2"></i>Per Siswa
+                </button>
             </div>
 
             <!-- Tab: Presentase (Table) -->
@@ -110,6 +116,75 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- Tab: Per Siswa -->
+            <div x-show="tab === 'per_siswa'" class="p-6" x-cloak>
+                <?php if (!empty($studentAttendancePercentages)): ?>
+                    <!-- Search + Export bar -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                        <div class="relative">
+                            <input type="text" id="siswaSearch" placeholder="Cari nama / NIPD..."
+                                class="pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 w-64"
+                                oninput="filterSiswaTable(this.value)">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            Total: <span id="siswaCount"><?= count($studentAttendancePercentages) ?></span> siswa
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm" id="perSiswaTable">
+                            <thead>
+                                <tr class="bg-indigo-50 text-indigo-800">
+                                    <th class="px-3 py-3 text-center font-semibold w-10">No</th>
+                                    <th class="px-3 py-3 text-left font-semibold">Nama Siswa</th>
+                                    <th class="px-3 py-3 text-left font-semibold">NIPD</th>
+                                    <?php if (empty($filterKelas)): ?>
+                                        <th class="px-3 py-3 text-center font-semibold">Kelas</th>
+                                    <?php endif; ?>
+                                    <th class="px-3 py-3 text-center font-semibold">Hari Efektif</th>
+                                    <th class="px-3 py-3 text-center font-semibold text-green-700">Hadir</th>
+                                    <th class="px-3 py-3 text-center font-semibold text-yellow-700">Sakit</th>
+                                    <th class="px-3 py-3 text-center font-semibold text-blue-700">Izin</th>
+                                    <th class="px-3 py-3 text-center font-semibold text-red-700">Alpha</th>
+                                    <th class="px-3 py-3 text-center font-semibold">Persentase</th>
+                                </tr>
+                            </thead>
+                            <tbody id="perSiswaTbody">
+                                <?php $no = 1; foreach ($studentAttendancePercentages as $row): ?>
+                                    <?php
+                                        $pct = (float)$row['percentage'];
+                                        if ($pct >= 90)      { $pctClass = 'text-green-700';  $badgeBg = 'bg-green-50'; }
+                                        elseif ($pct >= 75)  { $pctClass = 'text-yellow-700'; $badgeBg = 'bg-yellow-50'; }
+                                        else                 { $pctClass = 'text-red-700';    $badgeBg = 'bg-red-50'; }
+                                    ?>
+                                    <tr class="border-t border-gray-200 hover:bg-gray-50 siswa-row">
+                                        <td class="px-3 py-3 text-center text-gray-500"><?= $no++ ?></td>
+                                        <td class="px-3 py-3 font-medium text-gray-800 siswa-nama"><?= esc($row['nama']) ?></td>
+                                        <td class="px-3 py-3 text-gray-600 siswa-nipd"><?= esc($row['nipd']) ?></td>
+                                        <?php if (empty($filterKelas)): ?>
+                                            <td class="px-3 py-3 text-center text-gray-600"><?= esc($row['kelas']) ?></td>
+                                        <?php endif; ?>
+                                        <td class="px-3 py-3 text-center text-gray-700"><?= esc($row['effective_days']) ?></td>
+                                        <td class="px-3 py-3 text-center font-semibold text-green-700"><?= esc($row['total_hadir']) ?></td>
+                                        <td class="px-3 py-3 text-center font-semibold text-yellow-700"><?= esc($row['total_sakit']) ?></td>
+                                        <td class="px-3 py-3 text-center font-semibold text-blue-700"><?= esc($row['total_izin']) ?></td>
+                                        <td class="px-3 py-3 text-center font-semibold text-red-700"><?= esc($row['total_alpha']) ?></td>
+                                        <td class="px-3 py-3 text-center">
+                                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold <?= $pctClass ?> <?= $badgeBg ?>">
+                                                <?= number_format($pct, 1) ?>%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <p class="text-center text-gray-500 py-6">Tidak ada data siswa untuk filter yang dipilih.</p>
+                <?php endif; ?>
             </div>
 
             <!-- Tab: Grafik -->
@@ -249,5 +324,22 @@
         })();
     </script>
 <?php endif; ?>
+
+<script>
+function filterSiswaTable(q) {
+    q = q.toLowerCase();
+    var rows = document.querySelectorAll('#perSiswaTbody .siswa-row');
+    var visible = 0;
+    rows.forEach(function(row) {
+        var nama  = (row.querySelector('.siswa-nama')  || {textContent:''}).textContent.toLowerCase();
+        var nipd  = (row.querySelector('.siswa-nipd')  || {textContent:''}).textContent.toLowerCase();
+        var show  = nama.includes(q) || nipd.includes(q);
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    var countEl = document.getElementById('siswaCount');
+    if (countEl) countEl.textContent = visible;
+}
+</script>
 
 <?= $this->endSection() ?>

@@ -324,12 +324,14 @@ class Absensi extends BaseController
         }
 
         $classAttendancePercentages = [];
+        $studentAttendancePercentages = [];
         if ($filterBulan) {
             list($year, $month) = explode('-', $filterBulan);
             $year = (int)$year;
             $month = (int)$month;
             $summaryKelas = ($userRole === 'admin') ? $filterKelas : $filterKelas;
             $classAttendancePercentages = $this->absensiModel->getClassAttendancePercentages($year, $month, $summaryKelas);
+            $studentAttendancePercentages = $this->absensiModel->getStudentAttendancePercentages($year, $month, $summaryKelas);
         }
 
         $bulan_nama = isset($filterBulan) ? date('F', strtotime($filterBulan . '-01')) : date('F');
@@ -343,6 +345,7 @@ class Absensi extends BaseController
             'filterKelas' => $filterKelas,
             'filterBulan' => $filterBulan,
             'classAttendancePercentages' => $classAttendancePercentages,
+            'studentAttendancePercentages' => $studentAttendancePercentages,
             'bulan_nama' => $bulan_nama,
             'tahun' => $tahun,
         ];

@@ -582,6 +582,68 @@ class AbsensiModel extends Model
     }
 
     /**
+     * Get attendance percentage per student for a specific month
+     */
+    public function getStudentAttendancePercentages($year, $month, $kelasId = null)
+    {
+        $monthStr = str_pad($month, 2, '0', STR_PAD_LEFT);
+        $startDate = "$year-$monthStr-01";
+        $endDate = date('Y-m-t', strtotime($startDate));
+
+        $effectiveDays = $this->getEffectiveDaysForMonth($year, $month);
+
+        $db = \Config\Database::connect();
+
+        $query = "
+            SELECT 
+                s.id as siswa_id,
+                s.nipd,
+                s.nama,
+                s.kelas,
+                COUNT(CASE WHEN a.status = 'hadir' THEN 1 END) as total_hadir,
+                COUNT(CASE WHEN a.status = 'sakit' THEN 1 END) as total_sakit,
+                COUNT(CASE WHEN a.status = 'izin'  THEN 1 END) as total_izin,
+                COUNT(CASE WHEN a.status NOT IN ('hadir','sakit','izin') THEN 1 END) as total_alpha
+            FROM tb_siswa s
+            LEFT JOIN absensi a 
+                ON a.siswa_id = s.id 
+                AND a.tanggal >= ? 
+                AND a.tanggal <= ?
+            WHERE s.deleted_at IS NULL
+        ";
+
+        $params = [$startDate, $endDate];
+
+        if ($kelasId) {
+            $query .= " AND s.kelas = ?";
+            $params[] = $kelasId;
+        }
+
+        $query .= " GROUP BY s.id, s.nipd, s.nama, s.kelas ORDER BY s.kelas ASC, s.nama ASC";
+
+        $rows = $db->query($query, $params)->getResultArray();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $totalHadir   = (int)$row['total_hadir'];
+            $percentage   = $effectiveDays > 0 ? ($totalHadir / $effectiveDays) * 100 : 0;
+            $result[] = [
+                'nipd'          => $row['nipd'],
+                'nama'          => $row['nama'],
+                'kelas'         => $row['kelas'],
+                'total_hadir'   => $totalHadir,
+                'total_sakit'   => (int)$row['total_sakit'],
+                'total_izin'    => (int)$row['total_izin'],
+                'total_alpha'   => (int)$row['total_alpha'],
+                'effective_days'=> $effectiveDays,
+                'percentage'    => $percentage,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
      * Get holidays for a specific month from academic calendar
      */
     private function getHolidaysForMonth($year, $month)
