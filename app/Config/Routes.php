@@ -258,6 +258,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('profile', 'Admin\Profile::index');
     $routes->get('profile/edit', 'Admin\Profile::edit');
     $routes->post('profile/update', 'Admin\Profile::update');
+    $routes->post('profile/change-password', 'Admin\Profile::changePassword');
 
     // 7 Kebiasaan - Monthly Recap (Walikelas limited view)
     $routes->get('habits/monthly', 'Admin\HabitMonthlyController::index');
@@ -293,6 +294,7 @@ $routes->group('siswa', ['filter' => 'role:siswa'], function ($routes) {
     $routes->get('summary', 'Siswa\\HabitController::summary');
     $routes->get('stats', 'Siswa\\HabitController::getStats');
     $routes->get('profile', 'Siswa\\ProfileController::index');
+    $routes->post('profile/change-password', 'Siswa\\ProfileController::changePassword');
     // Basic JSON name endpoint for dashboard lazy refresh
     $routes->get('profile/json-basic', 'Siswa\\ProfileController::basicJson');
     // Classroom (materi & tugas terpublish untuk kelas siswa)

@@ -5,16 +5,19 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\AdminModel;
 use App\Models\GuruModel;
+use App\Models\UserModel;
 
 class Profile extends BaseController
 {
     protected $adminModel;
     protected $guruModel;
+    protected $userModel;
 
     public function __construct()
     {
         $this->adminModel = new AdminModel();
         $this->guruModel = new GuruModel();
+        $this->userModel = new UserModel();
     }
 
     public function index()
@@ -28,7 +31,7 @@ class Profile extends BaseController
         $userRole = session()->get('role');
         $data = [];
 
-        if ($userRole === 'walikelas') {
+        if (in_array($userRole, ['walikelas', 'guru'], true)) {
             // Get guru data for walikelas using session data
             $userName = session()->get('nama');
             
@@ -84,7 +87,7 @@ class Profile extends BaseController
         $userId = session()->get('user_id');
         $userRole = session()->get('role');
 
-        if ($userRole === 'walikelas') {
+        if (in_array($userRole, ['walikelas', 'guru'], true)) {
             // Get guru data for editing using session data
             $userName = session()->get('nama');
             
@@ -200,18 +203,17 @@ class Profile extends BaseController
 
     public function changePassword()
     {
-        // Check if user is logged in
         if (!session()->get('logged_in')) {
             return redirect()->to('/login');
         }
 
         $userId = session()->get('user_id');
         $userRole = session()->get('role');
+        $redirectUrl = $this->getProfileRedirectUrl($userRole);
 
-        // Only admin can change password through this method
-        if ($userRole !== 'admin') {
+        if (!in_array($userRole, ['admin', 'walikelas', 'guru'], true)) {
             session()->setFlashdata('error', 'Akses ditolak.');
-            return redirect()->to('/admin/profile');
+            return redirect()->to($redirectUrl);
         }
 
         $validationRules = [
@@ -224,21 +226,29 @@ class Profile extends BaseController
             return redirect()->back()->with('errors', $this->validator->getErrors());
         }
 
-        // Verify current password
-        $admin = $this->adminModel->find($userId);
-        if (!password_verify($this->request->getPost('current_password'), $admin['password'])) {
-            session()->setFlashdata('error', 'Password saat ini tidak valid.');
-            return redirect()->to('/admin/profile');
+        $user = $this->userModel->find($userId);
+        if (!$user) {
+            session()->setFlashdata('error', 'Data pengguna tidak ditemukan.');
+            return redirect()->to($redirectUrl);
         }
 
-        // Update password
-        if ($this->adminModel->updatePassword($userId, $this->request->getPost('new_password'))) {
+        if (!$this->userModel->verifyPassword($userId, $this->request->getPost('current_password'))) {
+            session()->setFlashdata('error', 'Password saat ini tidak valid.');
+            return redirect()->to($redirectUrl);
+        }
+
+        if ($this->userModel->updatePassword($userId, $this->request->getPost('new_password'))) {
             session()->setFlashdata('success', 'Password berhasil diubah.');
         } else {
             session()->setFlashdata('error', 'Gagal mengubah password.');
         }
 
-        return redirect()->to('/admin/profile');
+        return redirect()->to($redirectUrl);
+    }
+
+    private function getProfileRedirectUrl(string $userRole): string
+    {
+        return $userRole === 'admin' ? '/admin/profile' : '/profile';
     }
 
     public function uploadAvatar()

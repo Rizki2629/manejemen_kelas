@@ -43,6 +43,17 @@
             </div>
         <?php endif; ?>
 
+        <?php if (session('errors')): ?>
+            <div class="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+                <div class="font-semibold mb-2">Periksa kembali form ubah password:</div>
+                <ul class="list-disc list-inside space-y-1 text-sm">
+                    <?php foreach (session('errors') as $error): ?>
+                        <li><?= esc($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Profile Card -->
             <div class="lg:col-span-1">
@@ -184,7 +195,7 @@
 </div>
 
 <!-- Change Password Modal -->
-<div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+<div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-bold text-gray-900">Ubah Password</h3>
@@ -205,7 +216,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Password Baru</label>
-                    <input type="password" name="password" required minlength="6"
+                    <input type="password" name="new_password" required minlength="6"
                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
                 </div>
 
@@ -230,11 +241,15 @@
 
 <script>
 function showChangePasswordModal() {
-    document.getElementById('changePasswordModal').classList.remove('hidden');
+    const modal = document.getElementById('changePasswordModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
 function hideChangePasswordModal() {
-    document.getElementById('changePasswordModal').classList.add('hidden');
+    const modal = document.getElementById('changePasswordModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
 }
 </script>
 <?= $this->endSection() ?>

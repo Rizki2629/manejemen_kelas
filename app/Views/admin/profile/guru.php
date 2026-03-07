@@ -43,6 +43,17 @@
             </div>
         <?php endif; ?>
 
+        <?php if (session('errors')): ?>
+            <div class="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-xl mb-6 shadow-sm">
+                <div class="font-semibold mb-2">Periksa kembali form ubah password:</div>
+                <ul class="list-disc list-inside space-y-1 text-sm">
+                    <?php foreach (session('errors') as $error): ?>
+                        <li><?= esc($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Profile Card -->
             <div class="lg:col-span-1">
@@ -60,8 +71,8 @@
                     <p class="text-gray-600 mb-4"><?= esc($guru['email'] ?? 'Belum diisi') ?></p>
                     
                     <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 mb-6">
-                        <p class="text-sm text-gray-600 mb-1">Status</p>
-                        <p class="text-lg font-semibold text-blue-700">Guru Aktif</p>
+                        <p class="text-sm text-gray-600 mb-1">Role</p>
+                        <p class="text-lg font-semibold text-blue-700"><?= $role === 'walikelas' ? 'Wali Kelas' : 'Guru' ?></p>
                     </div>
 
                     <div class="space-y-3">
@@ -172,8 +183,83 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 mt-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-shield-alt text-green-500 mr-3"></i>
+                        Keamanan Akun
+                    </h3>
+
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-green-800">Password</h4>
+                                <p class="text-green-700 text-sm mt-1">Ubah password akun Anda langsung dari halaman profil.</p>
+                            </div>
+                            <i class="fas fa-lock text-green-600"></i>
+                        </div>
+                        <button onclick="showChangePasswordModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            Ubah Password
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-900">Ubah Password</h3>
+            <button onclick="hideChangePasswordModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <form action="/profile/change-password" method="POST">
+            <?= csrf_field() ?>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password Saat Ini</label>
+                    <input type="password" name="current_password" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password Baru</label>
+                    <input type="password" name="new_password" required minlength="6" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Konfirmasi Password Baru</label>
+                    <input type="password" name="confirm_password" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 rounded-xl font-semibold transition-all duration-300">
+                    Ubah Password
+                </button>
+                <button type="button" onclick="hideChangePasswordModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold transition-all duration-300">
+                    Batal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showChangePasswordModal() {
+    const modal = document.getElementById('changePasswordModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function hideChangePasswordModal() {
+    const modal = document.getElementById('changePasswordModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
 <?= $this->endSection() ?>

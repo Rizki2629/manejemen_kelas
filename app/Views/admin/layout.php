@@ -1214,7 +1214,7 @@
                         <?php
                         // Build profile URL per role
                         $profileUrl = '/admin/profile';
-                        if ($userRole === 'walikelas') {
+                        if ($userRole === 'walikelas' || $userRole === 'guru') {
                             $profileUrl = '/profile';
                         } elseif ($userRole === 'siswa') {
                             $profileUrl = '/siswa/profile';
@@ -1228,7 +1228,7 @@
                                 <span class="font-semibold text-sm block">
                                     <?php
                                     $userRole = session()->get('role');
-                                    echo ($userRole === 'walikelas') ? 'Profil Guru' : 'Profile';
+                                    echo in_array($userRole, ['walikelas', 'guru'], true) ? 'Profil Guru' : 'Profile';
                                     ?>
                                 </span>
                             </div>

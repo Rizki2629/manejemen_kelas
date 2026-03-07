@@ -7,6 +7,7 @@ use App\Models\StudentModel;
 use App\Models\ClassModel;
 use App\Models\HabitModel;
 use App\Models\TbSiswaModel;
+use App\Models\UserModel;
 
 class ProfileController extends BaseController
 {
@@ -14,13 +15,15 @@ class ProfileController extends BaseController
     protected $classModel;
     protected $habitModel;
     protected $tbSiswaModel;
+    protected $userModel;
 
     public function __construct()
     {
-    $this->studentModel = new StudentModel();
-    $this->classModel = new ClassModel();
-    $this->habitModel = new HabitModel();
-    $this->tbSiswaModel = new TbSiswaModel();
+        $this->studentModel = new StudentModel();
+        $this->classModel = new ClassModel();
+        $this->habitModel = new HabitModel();
+        $this->tbSiswaModel = new TbSiswaModel();
+        $this->userModel = new UserModel();
     }
 
     public function index()
@@ -94,13 +97,12 @@ class ProfileController extends BaseController
 
         // detect Islam
         $isIslam = false;
-    $fromTb = $tbRow;
-    $agama = $student['agama'] ?? ($tbRow['agama'] ?? null);
+        $agama = $student['agama'] ?? ($tbRow['agama'] ?? null);
         if ($agama && stripos($agama, 'islam') !== false) $isIslam = true;
 
         // Fallback Tempat/Tanggal Lahir
-    $ttlTempat = $student['tempat_lahir'] ?? ($tbRow['tempat_lahir'] ?? null);
-    $ttlTanggal = $student['tanggal_lahir'] ?? ($tbRow['tanggal_lahir'] ?? null);
+        $ttlTempat = $student['tempat_lahir'] ?? ($tbRow['tempat_lahir'] ?? null);
+        $ttlTanggal = $student['tanggal_lahir'] ?? ($tbRow['tanggal_lahir'] ?? null);
 
         // get beribadah habit id (fallback to berdoa)
         $ibadahHabit = $this->habitModel->where('code', 'beribadah')->first();
@@ -117,6 +119,38 @@ class ProfileController extends BaseController
             'ttlTempat' => $ttlTempat,
             'ttlTanggal' => $ttlTanggal,
         ]);
+    }
+
+    public function changePassword()
+    {
+        if (session('role') !== 'siswa' || !session()->get('logged_in')) {
+            return redirect()->to('/login')->with('error', 'Sesi siswa berakhir');
+        }
+
+        $validationRules = [
+            'current_password' => 'required',
+            'new_password' => 'required|min_length[6]',
+            'confirm_password' => 'required|matches[new_password]',
+        ];
+
+        if (!$this->validate($validationRules)) {
+            return redirect()->back()->with('errors', $this->validator->getErrors());
+        }
+
+        $userId = (int) session('user_id');
+        if (!$this->userModel->find($userId)) {
+            return redirect()->to('/siswa/profile')->with('error', 'Data pengguna tidak ditemukan');
+        }
+
+        if (!$this->userModel->verifyPassword($userId, (string) $this->request->getPost('current_password'))) {
+            return redirect()->to('/siswa/profile')->with('error', 'Password saat ini tidak valid');
+        }
+
+        if (!$this->userModel->updatePassword($userId, (string) $this->request->getPost('new_password'))) {
+            return redirect()->to('/siswa/profile')->with('error', 'Gagal mengubah password');
+        }
+
+        return redirect()->to('/siswa/profile')->with('success', 'Password berhasil diubah');
     }
 
     /**

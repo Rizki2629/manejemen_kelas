@@ -312,9 +312,10 @@
                         <!-- Dropdown Menu - Mobile Optimized -->
                         <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 sm:w-52 bg-white rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 z-50">
                             <div class="py-2">
-                                <a href="<?= base_url('admin/profile') ?>" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 touch-manipulation">
+                                <?php $profileUrl = in_array(session('role'), ['guru', 'walikelas'], true) ? base_url('profile') : base_url('admin/profile'); ?>
+                                <a href="<?= $profileUrl ?>" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 touch-manipulation">
                                     <i class="fas fa-user mr-3 text-gray-400"></i>
-                                    Profile
+                                    <?= in_array(session('role'), ['guru', 'walikelas'], true) ? 'Profil Guru' : 'Profile' ?>
                                 </a>
                                 <a href="<?= base_url('admin/settings') ?>" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 touch-manipulation">
                                     <i class="fas fa-cog mr-3 text-gray-400"></i>

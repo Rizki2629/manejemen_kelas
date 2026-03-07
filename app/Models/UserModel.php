@@ -128,4 +128,23 @@ class UserModel extends Model
                     ->where('users.is_active', 1)
                     ->findAll();
     }
+
+    public function updatePassword(int $userId, string $newPassword): bool
+    {
+        return $this->update($userId, [
+            'password' => password_hash($newPassword, PASSWORD_DEFAULT),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function verifyPassword(int $userId, string $password): bool
+    {
+        $user = $this->find($userId);
+
+        if (!$user || empty($user['password'])) {
+            return false;
+        }
+
+        return password_verify($password, $user['password']);
+    }
 }
