@@ -83,6 +83,12 @@ test_*.php
 test_*.html
 *_test.php
 debug_*.php
+debug-*.html
+debug-*.php
+public/debug-*.html
+public/debug-*.php
+public/test-*.html
+public/*-test.php
 check_*.php
 add_*.php
 create_*.php
